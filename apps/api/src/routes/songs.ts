@@ -93,11 +93,12 @@ router.get("/meta/popular", async (req, res) => {
     const { genre, limit = "20" } = req.query;
 
     const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 50);
-    const tracks = await spotifyService.getPopularTracks(genre as string | undefined, limitNum);
+    const { tracks, totalResults } = await spotifyService.getPopularTracks(genre as string | undefined, limitNum);
 
     res.json({
       tracks: tracks.map(transformSpotifyTrack),
       genre: genre || "all",
+      totalResults,
     });
   } catch (error) {
     logger.error("Failed to fetch popular songs", error);

@@ -205,7 +205,7 @@ class SpotifyService {
   /**
    * Get popular tracks by genre or mood (using search with filters)
    */
-  async getPopularTracks(genre?: string, limit = 20): Promise<SpotifyTrack[]> {
+  async getPopularTracks(genre?: string, limit = 20): Promise<{ tracks: SpotifyTrack[]; totalResults: number }> {
     const query = genre ? `genre:${genre}` : "year:2024";
     return this.searchTracks(query, limit);
   }
