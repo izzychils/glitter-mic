@@ -1,0 +1,15 @@
+/** Tiny dependency-free logger so the scaffold has consistent, greppable output. */
+type Level = "info" | "warn" | "error";
+
+function write(level: Level, message: string, meta?: unknown): void {
+  const line = `[${new Date().toISOString()}] ${level.toUpperCase()} ${message}`;
+  if (level === "error") console.error(line, meta ?? "");
+  else if (level === "warn") console.warn(line, meta ?? "");
+  else console.info(line, meta ?? "");
+}
+
+export const logger = {
+  info: (message: string, meta?: unknown) => write("info", message, meta),
+  warn: (message: string, meta?: unknown) => write("warn", message, meta),
+  error: (message: string, meta?: unknown) => write("error", message, meta),
+};

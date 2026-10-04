@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pink-500: #ff4f9a;
+  --pink-300: #ff9cc7;
+  --pink-100: #ffe3ef;
+  --red-500: #ef233c;
+  --red-600: #d90429;
+  --blue-500: #2b6fff;
+  --blue-300: #8ab4ff;
+  --blue-900: #0b1b4d;
+  --white: #ffffff;
+  --ink: #14102b;
+
+  --glass-bg: rgba(255, 255, 255, 0.14);
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --glass-shadow: 0 8px 32px rgba(11, 27, 77, 0.35);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    background-color: var(--blue-900);
+    color: var(--white);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* ---- Glassmorphism surface (flat translucent fill, no color ramps) ---- */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  border-radius: 24px;
+}
+
+/* ---- Drifting background circles: single flat colors, blurred, never color ramps ---- */
+@keyframes drift-a {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(70px, -50px, 0) scale(1.1);
+  }
+  100% {
+    transform: translate3d(-40px, 40px, 0) scale(0.95);
+  }
+}
+
+@keyframes drift-b {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-60px, 60px, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(50px, -30px, 0) scale(0.92);
+  }
+}
+
+@keyframes drift-c {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(40px, -60px, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(-50px, 30px, 0) scale(0.96);
+  }
+}
+
+.animate-drift-a {
+  animation: drift-a 38s ease-in-out infinite alternate;
+}
+
+.animate-drift-b {
+  animation: drift-b 46s ease-in-out infinite alternate;
+}
+
+.animate-drift-c {
+  animation: drift-c 54s ease-in-out infinite alternate;
+}
+
+/* ---- Accessibility ---- */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--pink-300);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drift-a,
+  .animate-drift-b,
+  .animate-drift-c {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

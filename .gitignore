@@ -1,0 +1,31 @@
+node_modules/
+dist/
+build/
+coverage/
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# python worker
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# editors / os
+.DS_Store
+.vscode/
+.idea/
+
+# vite
+.vite/
+
+# freebuff workspace metadata
+.freebuff/

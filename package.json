@@ -1,0 +1,26 @@
+{
+  "name": "glitter-mic",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Glitter Mic - multiplayer + solo karaoke web game with blurred lyrics and fair voice scoring",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n web,api -c blue,magenta \"npm run dev -w @glitter-mic/web\" \"npm run dev -w @glitter-mic/api\"",
+    "dev:web": "npm run dev -w @glitter-mic/web",
+    "dev:api": "npm run dev -w @glitter-mic/api",
+    "build": "npm run build -w @glitter-mic/scoring-core && npm run build -w @glitter-mic/api && npm run build -w @glitter-mic/web",
+    "test": "npm run test -w @glitter-mic/scoring-core",
+    "test:watch": "npm run test:watch -w @glitter-mic/scoring-core",
+    "typecheck": "npm run typecheck -w @glitter-mic/scoring-core && npm run typecheck -w @glitter-mic/api && npm run typecheck -w @glitter-mic/web",
+    "lint:no-gradient": "node scripts/lint-no-gradient.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
