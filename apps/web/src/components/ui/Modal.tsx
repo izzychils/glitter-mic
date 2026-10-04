@@ -24,7 +24,7 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-50 grid place-items-center p-4"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-20"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -32,16 +32,16 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
           <button
             type="button"
             aria-label="Close dialog"
-            className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 cursor-default bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            initial={{ opacity: 0, y: -20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.98 }}
+            exit={{ opacity: 0, y: -20, scale: 0.98 }}
             transition={{ duration: 0.2 }}
             className="glass relative w-full max-w-lg p-6"
           >
