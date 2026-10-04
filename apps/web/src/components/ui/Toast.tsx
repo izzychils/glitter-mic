@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-export type ToastVariant = "info" | "success" | "danger";
+export type ToastVariant = "info" | "success" | "danger" | "error";
 
 interface ToastItem {
   id: number;
@@ -21,12 +21,14 @@ const ICONS = {
   info: Info,
   success: CheckCircle2,
   danger: AlertTriangle,
+  error: XCircle,
 } as const;
 
 const ACCENTS: Record<ToastVariant, string> = {
   info: "text-[var(--blue-300)]",
   success: "text-[var(--pink-300)]",
   danger: "text-[var(--red-500)]",
+  error: "text-[var(--red-500)]",
 };
 
 const AUTO_DISMISS_MS = 4200;
