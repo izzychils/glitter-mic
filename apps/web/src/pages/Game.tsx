@@ -146,14 +146,14 @@ export function Game() {
       setSearchStats({ total: data.total, totalResults: data.totalResults });
 
       if (data.total === 0 && data.totalResults > 0) {
-        // Found songs but none have previews
+        // Found songs but something went wrong
         toast(
-          `Found ${data.totalResults} songs, but none have previews. Try searching for specific song titles like "7 rings" or "thank u, next"!`,
+          `Found ${data.totalResults} songs. Try a different search term!`,
           "info"
         );
       } else if (data.total === 0) {
         // No songs found at all
-        toast("No songs found. Try a different search term or artist!", "info");
+        toast("No songs found. Try mood-based searches like 'epic', 'chill', or 'upbeat'!", "info");
       }
     } catch (error) {
       toast("Failed to search songs. Please try again.", "error");
@@ -355,15 +355,14 @@ export function Game() {
               {searchStats && searchStats.totalResults > 0 ? (
                 <>
                   <p className="text-sm text-white/50">
-                    Found {searchStats.totalResults} songs on Spotify, but none have 30-second previews available.
+                    Found {searchStats.totalResults} songs on Epidemic Sound.
                   </p>
                   <p className="mt-3 text-sm font-semibold text-blood-pink">
-                    💡 Try searching for specific song titles instead:
+                    💡 Try mood-based searches:
                   </p>
                   <div className="mt-2 space-y-1 text-xs text-white/40">
-                    <p>• "7 rings" instead of "ariana grande"</p>
-                    <p>• "positions" by Ariana Grande</p>
-                    <p>• Recent chart hits usually have previews</p>
+                    <p>• "epic" • "chill" • "upbeat" • "cinematic"</p>
+                    <p>• "happy" • "dramatic" • "romantic" • "energetic"</p>
                   </div>
                 </>
               ) : searchQuery ? (
@@ -375,26 +374,26 @@ export function Game() {
                     Search tips:
                   </p>
                   <div className="mt-2 space-y-1 text-xs text-white/40">
-                    <p>• Use song titles: "Blinding Lights", "Shape of You"</p>
-                    <p>• Try artist + song: "The Weeknd Starboy"</p>
-                    <p>• Popular songs have better preview availability</p>
+                    <p>• Use moods: "epic", "chill", "upbeat"</p>
+                    <p>• Try genres: "rock", "electronic", "indie"</p>
+                    <p>• All songs have full-length audio + lyrics!</p>
                   </div>
                 </>
               ) : (
                 <>
                   <p className="text-sm text-white/50">
-                    Search for songs to get started. Popular songs usually have 30-second previews.
+                    Search for songs to get started. All songs have full-length audio!
                   </p>
                   <p className="mt-3 text-sm font-semibold text-blood-pink">
                     Try these popular searches:
                   </p>
                   <div className="mt-2 space-y-1 text-xs text-white/40">
-                    <p>• "Blinding Lights" • "Levitating" • "Anti-Hero"</p>
-                    <p>• "As It Was" • "Flowers" • "Cruel Summer"</p>
+                    <p>• "upbeat" • "epic" • "chill" • "workout"</p>
+                    <p>• "summer vibes" • "cinematic" • "happy"</p>
                   </div>
                 </>
               )}
-              <p className="mt-4 text-xs text-white/30">Powered by Spotify</p>
+              <p className="mt-4 text-xs text-white/30">Powered by Epidemic Sound</p>
             </div>
           )}
         </motion.div>

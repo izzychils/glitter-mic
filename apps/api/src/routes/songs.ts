@@ -1,30 +1,32 @@
 import { Router } from "express";
-import { spotifyService, type SpotifyTrack } from "../lib/spotify";
+import { epidemicService, type EpidemicTrack } from "../lib/epidemic";
 import { logger } from "../lib/logger";
 
 const router = Router();
 
 /**
- * Transform Spotify track to our unified format
+ * Transform Epidemic Sound track to our unified format
  */
-function transformSpotifyTrack(track: SpotifyTrack) {
+function transformEpidemicTrack(track: EpidemicTrack) {
   return {
     id: track.id,
-    title: track.name,
-    artist: track.artists.map((a) => a.name).join(", "),
-    artistId: track.artists[0]?.id,
-    album: track.album.name,
-    duration: Math.floor(track.duration_ms / 1000),
-    audioUrl: track.preview_url, // 30-second preview
-    imageUrl: track.album.images[0]?.url || null,
-    spotifyUrl: track.external_urls.spotify,
-    hasPreview: track.preview_url !== null,
+    title: track.title,
+    artist: [...track.mainArtists, ...track.featuredArtists].join(", "),
+    duration: track.length,
+    bpm: track.bpm,
+    imageUrl: track.images.M || track.images.default,
+    waveformUrl: track.waveformUrl,
+    hasVocals: track.hasVocals,
+    isExplicit: track.isExplicit,
+    moods: track.moods.map((m) => m.name),
+    genres: track.genres.map((g) => g.name),
+    added: track.added,
   };
 }
 
 /**
  * GET /api/songs
- * Search and browse songs from Spotify
+ * Search songs from Epidemic Sound
  */
 router.get("/", async (req, res) => {
   try {
@@ -37,92 +39,129 @@ router.get("/", async (req, res) => {
       });
     }
 
-    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 50);
-    const { tracks, totalResults } = await spotifyService.searchTracks(search, limitNum);
+    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 60);
+    const userId = req.session.userId;
+    
+    const { tracks, total } = await epidemicService.searchTracks(search, limitNum, userId);
 
     res.json({
-      tracks: tracks.map(transformSpotifyTrack),
+      tracks: tracks.map(transformEpidemicTrack),
       total: tracks.length,
-      totalResults, // Total results in Spotify (before preview filtering)
+      totalResults: total,
     });
   } catch (error: any) {
     logger.error("Failed to search songs", error);
 
-    // Handle rate limiting
-    if (error.message?.includes("Rate limited")) {
-      return res.status(429).json({
-        error: "Too many requests",
-        message: error.message,
-      });
-    }
-
     res.status(500).json({
       error: "Failed to search songs",
-      message: "Could not search Spotify catalog",
+      message: "Could not search Epidemic Sound catalog",
     });
   }
 });
 
 /**
  * GET /api/songs/:id
- * Get detailed info about a specific song from Spotify
+ * Get detailed info about a specific song from Epidemic Sound
  */
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.session.userId;
 
-    const track = await spotifyService.getTrack(id);
+    const track = await epidemicService.getTrack(id, userId);
 
-    res.json(transformSpotifyTrack(track));
+    res.json(transformEpidemicTrack(track));
   } catch (error: any) {
     logger.error("Failed to fetch song details", { trackId: req.params.id, error });
 
     res.status(404).json({
       error: "Song not found",
-      message: "The requested song could not be found on Spotify",
+      message: "The requested song could not be found on Epidemic Sound",
     });
   }
 });
 
 /**
- * GET /api/songs/meta/popular
- * Get popular/trending songs
+ * GET /api/songs/:id/download
+ * Get download URL for a song
  */
-router.get("/meta/popular", async (req, res) => {
+router.get("/:id/download", async (req, res) => {
   try {
-    const { genre, limit = "20" } = req.query;
+    const { id } = req.params;
+    const { format = "mp3", quality = "high" } = req.query;
+    const userId = req.session.userId;
 
-    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 50);
-    const { tracks, totalResults } = await spotifyService.getPopularTracks(genre as string | undefined, limitNum);
+    const downloadData = await epidemicService.getDownloadUrl(
+      id,
+      format as "mp3" | "wav",
+      quality as "normal" | "high",
+      userId
+    );
 
-    res.json({
-      tracks: tracks.map(transformSpotifyTrack),
-      genre: genre || "all",
-      totalResults,
-    });
+    res.json(downloadData);
   } catch (error) {
-    logger.error("Failed to fetch popular songs", error);
+    logger.error("Failed to get download URL", { trackId: req.params.id, error });
     res.status(500).json({
-      error: "Failed to fetch popular songs",
-      message: "Could not load trending tracks",
+      error: "Failed to get download URL",
+      message: "Could not generate download link",
     });
+  }
+});
+
+/**
+ * GET /api/songs/:id/stream
+ * Get streaming URL for a song
+ */
+router.get("/:id/stream", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.session.userId;
+
+    const streamData = await epidemicService.getStreamingUrl(id, userId);
+
+    res.json(streamData);
+  } catch (error) {
+    logger.error("Failed to get streaming URL", { trackId: req.params.id, error });
+    res.status(500).json({
+      error: "Failed to get streaming URL",
+      message: "Could not generate streaming link",
+    });
+  }
+});
+
+/**
+ * GET /api/songs/:id/lyrics
+ * Get lyrics for a song
+ */
+router.get("/:id/lyrics", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.session.userId;
+
+    const lyrics = await epidemicService.getLyrics(id, userId);
+
+    res.json({ lyrics });
+  } catch (error) {
+    logger.error("Failed to get lyrics", { trackId: req.params.id, error });
+    res.json({ lyrics: null });
   }
 });
 
 /**
  * GET /api/songs/featured
- * Get featured tracks (popular songs with guaranteed previews)
+ * Get featured tracks (popular songs with guaranteed full-length audio)
  */
 router.get("/featured", async (req, res) => {
   try {
     const { limit = "20" } = req.query;
+    const userId = req.session.userId;
 
-    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 50);
-    const { tracks, totalResults } = await spotifyService.getFeaturedTracks(limitNum);
+    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 60);
+    const { tracks, total } = await epidemicService.getFeaturedTracks(limitNum, userId);
 
     res.json({
-      tracks: tracks.map(transformSpotifyTrack),
-      totalResults,
+      tracks: tracks.map(transformEpidemicTrack),
+      totalResults: total,
     });
   } catch (error) {
     logger.error("Failed to fetch featured songs", error);
