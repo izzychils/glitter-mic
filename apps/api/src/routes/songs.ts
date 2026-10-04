@@ -1,170 +1,109 @@
 import { Router } from "express";
-import { env } from "../lib/env";
+import { spotifyService, type SpotifyTrack } from "../lib/spotify";
 import { logger } from "../lib/logger";
 
 const router = Router();
 
-const JAMENDO_API_BASE = "https://api.jamendo.com/v3.0";
-
-interface JamendoTrack {
-  id: string;
-  name: string;
-  artist_name: string;
-  artist_id: string;
-  album_name: string;
-  album_id: string;
-  duration: number;
-  audio: string;
-  audiodownload: string;
-  image: string;
-  license_ccurl: string;
+/**
+ * Transform Spotify track to our unified format
+ */
+function transformSpotifyTrack(track: SpotifyTrack) {
+  return {
+    id: track.id,
+    title: track.name,
+    artist: track.artists.map((a) => a.name).join(", "),
+    artistId: track.artists[0]?.id,
+    album: track.album.name,
+    duration: Math.floor(track.duration_ms / 1000),
+    audioUrl: track.preview_url, // 30-second preview
+    imageUrl: track.album.images[0]?.url || null,
+    spotifyUrl: track.external_urls.spotify,
+    hasPreview: track.preview_url !== null,
+  };
 }
 
 /**
  * GET /api/songs
- * Search and browse songs from Jamendo
+ * Search and browse songs from Spotify
  */
 router.get("/", async (req, res) => {
   try {
-    const { search, limit = "20", offset = "0" } = req.query;
+    const { search, limit = "20" } = req.query;
 
-    const params = new URLSearchParams({
-      client_id: env.JAMENDO_CLIENT_ID,
-      format: "json",
-      limit: limit as string,
-      offset: offset as string,
-      audioformat: "mp32",
-      include: "musicinfo",
-    });
-
-    if (search) {
-      params.set("search", search as string);
-    } else {
-      // Default: popular tracks
-      params.set("order", "popularity_total");
+    if (!search || typeof search !== "string") {
+      return res.status(400).json({
+        error: "Missing search query",
+        message: "Please provide a search query",
+      });
     }
 
-    const response = await fetch(`${JAMENDO_API_BASE}/tracks/?${params.toString()}`);
-
-    if (!response.ok) {
-      throw new Error(`Jamendo API error: ${response.statusText}`);
-    }
-
-    const data: any = await response.json();
-
-    const tracks = data.results.map((track: JamendoTrack) => ({
-      id: track.id,
-      title: track.name,
-      artist: track.artist_name,
-      artistId: track.artist_id,
-      album: track.album_name,
-      albumId: track.album_id,
-      duration: track.duration,
-      audioUrl: track.audio,
-      downloadUrl: track.audiodownload,
-      imageUrl: track.image,
-      licenseUrl: track.license_ccurl,
-    }));
+    const tracks = await spotifyService.searchTracks(search, parseInt(limit as string));
 
     res.json({
-      tracks,
-      total: data.headers.results_count,
-      offset: parseInt(offset as string),
-      limit: parseInt(limit as string),
+      tracks: tracks.map(transformSpotifyTrack),
+      total: tracks.length,
     });
-  } catch (error) {
-    logger.error("Failed to fetch songs", error);
+  } catch (error: any) {
+    logger.error("Failed to search songs", error);
+
+    // Handle rate limiting
+    if (error.message?.includes("Rate limited")) {
+      return res.status(429).json({
+        error: "Too many requests",
+        message: error.message,
+      });
+    }
+
     res.status(500).json({
-      error: "Failed to fetch songs",
-      message: "Could not load songs from Jamendo",
+      error: "Failed to search songs",
+      message: "Could not search Spotify catalog",
     });
   }
 });
 
 /**
  * GET /api/songs/:id
- * Get detailed info about a specific song
+ * Get detailed info about a specific song from Spotify
  */
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const params = new URLSearchParams({
-      client_id: env.JAMENDO_CLIENT_ID,
-      format: "json",
-      id,
-      audioformat: "mp32",
-      include: "musicinfo+lyrics",
-    });
+    const track = await spotifyService.getTrack(id);
 
-    const response = await fetch(`${JAMENDO_API_BASE}/tracks/?${params.toString()}`);
+    res.json(transformSpotifyTrack(track));
+  } catch (error: any) {
+    logger.error("Failed to fetch song details", { trackId: req.params.id, error });
 
-    if (!response.ok) {
-      throw new Error(`Jamendo API error: ${response.statusText}`);
-    }
-
-    const data: any = await response.json();
-
-    if (!data.results || data.results.length === 0) {
-      return res.status(404).json({
-        error: "Song not found",
-        message: "The requested song could not be found",
-      });
-    }
-
-    const track = data.results[0];
-
-    res.json({
-      id: track.id,
-      title: track.name,
-      artist: track.artist_name,
-      artistId: track.artist_id,
-      album: track.album_name,
-      albumId: track.album_id,
-      duration: track.duration,
-      audioUrl: track.audio,
-      downloadUrl: track.audiodownload,
-      imageUrl: track.image,
-      licenseUrl: track.license_ccurl,
-      musicinfo: track.musicinfo,
-      lyrics: track.lyrics || null,
-    });
-  } catch (error) {
-    logger.error("Failed to fetch song details", error);
-    res.status(500).json({
-      error: "Failed to fetch song details",
-      message: "Could not load song information",
+    res.status(404).json({
+      error: "Song not found",
+      message: "The requested song could not be found on Spotify",
     });
   }
 });
 
 /**
- * GET /api/songs/genres
- * Get available music genres
+ * GET /api/songs/popular
+ * Get popular/trending songs
  */
-router.get("/meta/genres", async (_req, res) => {
+router.get("/meta/popular", async (req, res) => {
   try {
-    const params = new URLSearchParams({
-      client_id: env.JAMENDO_CLIENT_ID,
-      format: "json",
-    });
+    const { genre, limit = "20" } = req.query;
 
-    const response = await fetch(`${JAMENDO_API_BASE}/tracks/genres/?${params.toString()}`);
-
-    if (!response.ok) {
-      throw new Error(`Jamendo API error: ${response.statusText}`);
-    }
-
-    const data: any = await response.json();
+    const tracks = await spotifyService.getPopularTracks(
+      genre as string | undefined,
+      parseInt(limit as string)
+    );
 
     res.json({
-      genres: data.results,
+      tracks: tracks.map(transformSpotifyTrack),
+      genre: genre || "all",
     });
   } catch (error) {
-    logger.error("Failed to fetch genres", error);
+    logger.error("Failed to fetch popular songs", error);
     res.status(500).json({
-      error: "Failed to fetch genres",
-      message: "Could not load music genres",
+      error: "Failed to fetch popular songs",
+      message: "Could not load trending tracks",
     });
   }
 });

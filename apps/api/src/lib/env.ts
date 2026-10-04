@@ -37,9 +37,13 @@ const envSchema = z.object({
   DEEPGRAM_API_KEY: z.string(),
   DEEPGRAM_PROJECT_ID: z.string().optional(),
 
-  // Jamendo API for music catalog
-  JAMENDO_CLIENT_ID: z.string(),
+  // Jamendo API for music catalog (deprecated - using Spotify instead)
+  JAMENDO_CLIENT_ID: z.string().optional(),
   JAMENDO_CLIENT_SECRET: z.string().optional(),
+
+  // Spotify API for music catalog
+  SPOTIFY_CLIENT_ID: z.string(),
+  SPOTIFY_CLIENT_SECRET: z.string(),
 });
 
 const parsed = envSchema.safeParse(process.env);
