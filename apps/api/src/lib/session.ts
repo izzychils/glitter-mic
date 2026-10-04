@@ -12,14 +12,24 @@ declare module "express-session" {
 }
 
 // Upstash Redis adapter for connect-redis
-// connect-redis expects EX, but Upstash uses different syntax
+// connect-redis v7 passes options object, we need to extract TTL
 const upstashRedisClient = {
   get: async (key: string) => {
     return await redis.get(key);
   },
-  set: async (key: string, value: string, ttl?: number) => {
-    if (ttl) {
-      return await redis.setex(key, ttl, value);
+  set: async (key: string, value: string, options?: any) => {
+    // connect-redis v7 can pass { EX: ttl } or just ttl as number
+    let ttl: number | undefined;
+    
+    if (typeof options === "number") {
+      ttl = options;
+    } else if (options && typeof options === "object" && "EX" in options) {
+      ttl = options.EX;
+    }
+    
+    if (ttl && ttl > 0) {
+      // Upstash Redis uses EX option in set command
+      return await redis.set(key, value, { ex: Math.floor(ttl) });
     }
     return await redis.set(key, value);
   },
