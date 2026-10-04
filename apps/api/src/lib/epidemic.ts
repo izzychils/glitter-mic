@@ -120,18 +120,27 @@ class EpidemicSoundService {
   }
 
   /**
-   * Get track details by ID
+   * Get track details by ID using batch metadata endpoint
    */
   async getTrack(trackId: string, userId?: string): Promise<EpidemicTrack> {
     try {
-      const response = await axios.get<{ track: EpidemicTrack }>(
-        `${this.baseURL}/tracks/${trackId}`,
+      // Use batch metadata endpoint with single track ID
+      const response = await axios.get<{ tracks: EpidemicTrack[] }>(
+        `${this.baseURL}/tracks/metadata`,
         {
           headers: this.getHeaders(userId),
+          params: {
+            trackId: trackId,
+          },
         }
       );
 
-      return response.data.track;
+      const track = response.data.tracks[0];
+      if (!track) {
+        throw new Error("Track not found");
+      }
+
+      return track;
     } catch (error) {
       if (error instanceof AxiosError) {
         logger.error("Failed to get Epidemic Sound track", {
