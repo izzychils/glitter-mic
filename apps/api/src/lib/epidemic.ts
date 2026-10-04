@@ -228,10 +228,14 @@ class EpidemicSoundService {
 
   /**
    * Get lyrics for a track
-   * Converts plain text lyrics to LRC format for karaoke sync
+   * Converts plain text lyrics to LRC format with intelligent timing
    */
   async getLyrics(trackId: string, userId?: string): Promise<string | null> {
     try {
+      // First get track metadata to know duration
+      const track = await this.getTrack(trackId, userId);
+      const trackDuration = track.length; // in seconds
+
       const response = await axios.get<EpidemicLyricsResponse>(
         `${this.baseURL}/tracks/${trackId}/lyrics`,
         {
@@ -246,15 +250,27 @@ class EpidemicSoundService {
       }
 
       // Convert plain text lyrics to LRC format
-      // Epidemic returns newline-separated lyrics without timestamps
-      // We'll add fake timestamps every 3 seconds for basic sync
       const lines = plainLyrics.split('\n').filter(line => line.trim().length > 0);
+      
+      // Calculate optimal timing: distribute evenly across track duration
+      // Leave 10 seconds at the end for outro
+      const usableDuration = Math.max(trackDuration - 10, trackDuration * 0.9);
+      const secondsPerLine = usableDuration / lines.length;
+
       const lrcLines = lines.map((line, index) => {
-        const seconds = index * 3; // 3 seconds per line
+        const seconds = Math.floor(index * secondsPerLine);
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
-        const timestamp = `[${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}.00]`;
+        const centiseconds = Math.floor(((index * secondsPerLine) % 1) * 100);
+        const timestamp = `[${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}.${String(centiseconds).padStart(2, '0')}]`;
         return `${timestamp}${line}`;
+      });
+
+      logger.info("Converted lyrics to LRC", {
+        trackId,
+        lineCount: lines.length,
+        trackDuration,
+        secondsPerLine: secondsPerLine.toFixed(2),
       });
 
       return lrcLines.join('\n');
