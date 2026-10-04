@@ -58,7 +58,7 @@ export function Game() {
   const [selectedGenre, setSelectedGenre] = useState<Genre>("all");
   const [songs, setSongs] = useState<Song[]>([]);
   const [searching, setSearching] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [selectedMode, setSelectedMode] = useState<string>("Solo Performance"); // Default to Solo
   const [searchStats, setSearchStats] = useState<{ total: number; totalResults: number } | null>(null);
   const { toast } = useToast();
 
@@ -170,11 +170,7 @@ export function Game() {
   };
 
   const handleSongSelect = (song: Song) => {
-    if (!selectedMode) {
-      toast("Please select a game mode first", "info");
-      return;
-    }
-
+    // selectedMode defaults to "Solo Performance", no need to check
     toast(`Starting ${selectedMode} with "${song.title}"...`, "success");
     
     // Navigate to karaoke session with song data as URL parameters
