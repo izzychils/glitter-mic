@@ -67,7 +67,7 @@ export const sessionMiddleware = session({
  * Middleware to restore session from X-Session-Token header if cookie is not available
  * This helps with browsers that block third-party cookies (like Safari)
  */
-export function sessionHeaderFallback(req: Request, res: Response, next: NextFunction) {
+export function sessionHeaderFallback(req: Request, _res: Response, next: NextFunction) {
   // If session already exists via cookie, continue
   if (req.session && req.session.userId) {
     return next();
