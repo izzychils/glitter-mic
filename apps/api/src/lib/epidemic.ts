@@ -91,6 +91,7 @@ class EpidemicSoundService {
           headers: this.getHeaders(userId),
           params: {
             term: query,
+            vocalType: "LEAD", // Only tracks with sung lead vocals (karaoke-ready!)
             limit: Math.min(limit, 60), // Max 60 per page
             sort: "Relevance",
             order: "desc",
@@ -238,25 +239,26 @@ class EpidemicSoundService {
    */
   async getFeaturedTracks(limit = 20, userId?: string): Promise<{ tracks: EpidemicTrack[]; total: number }> {
     try {
-      // Instead of collections, let's search for popular/trending tracks
-      // Collections endpoint might not be available in all Epidemic Sound plans
+      // Search for popular tracks with vocals (for karaoke)
       const response = await axios.get<EpidemicSearchResponse>(
         `${this.baseURL}/tracks/search`,
         {
           headers: this.getHeaders(userId),
           params: {
             term: "popular", // Search for popular tracks
+            vocalType: "LEAD", // Only tracks with sung lead vocals (karaoke-ready!)
             limit: Math.min(limit, 60),
-            sort: "Relevance",
+            sort: "Popularity",
             order: "desc",
           },
         }
       );
 
-      logger.info("Featured tracks loaded from search", {
+      logger.info("Featured tracks loaded from search with vocals", {
         totalFound: response.data.tracks.length,
         firstId: response.data.tracks[0]?.id,
         firstTitle: response.data.tracks[0]?.title,
+        hasVocals: response.data.tracks[0]?.hasVocals,
       });
 
       return {
