@@ -433,7 +433,7 @@ export function KaraokeSession() {
               disabled={generatingLyrics || isRecording}
               className="w-full"
             >
-              {generatingLyrics ? "Generating Perfect Lyrics..." : "🎵 Generate Perfect Lyrics (AI)"}
+              {generatingLyrics ? "Generating Perfect Lyrics..." : "🎵 Generate Perfect Lyrics"}
             </Button>
           </motion.div>
 
