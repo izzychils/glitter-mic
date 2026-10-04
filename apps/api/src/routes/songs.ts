@@ -192,18 +192,23 @@ router.post("/:id/lyrics/generate", async (req, res) => {
 
     logger.info("Generating LRC lyrics with Deepgram", { trackId: id });
 
-    // Get streaming URL for the audio
-    const streamData = await epidemicService.getStreamingUrl(id, userId);
+    // Get download URL for the audio (not streaming URL - Deepgram needs direct audio file)
+    const downloadData = await epidemicService.getDownloadUrl(id, "mp3", "high", userId);
     
-    if (!streamData.url) {
+    if (!downloadData.url) {
       return res.status(400).json({
         error: "No audio URL available",
         message: "Could not get audio URL for transcription",
       });
     }
 
+    logger.info("Using download URL for Deepgram transcription", { 
+      trackId: id, 
+      url: downloadData.url.substring(0, 50) + "..." 
+    });
+
     // Generate LRC from audio using Deepgram
-    const lrcLyrics = await generateLrcFromAudio(streamData.url);
+    const lrcLyrics = await generateLrcFromAudio(downloadData.url);
 
     // TODO: Cache in database
     // await db.query("INSERT INTO lyrics_cache (track_id, lrc, generated_at) VALUES ($1, $2, NOW()) ON CONFLICT (track_id) DO UPDATE SET lrc = $2, generated_at = NOW()", [id, lrcLyrics]);

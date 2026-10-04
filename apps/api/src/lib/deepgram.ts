@@ -50,21 +50,34 @@ interface DeepgramResponse {
  */
 export async function generateLrcFromAudio(audioUrl: string): Promise<string> {
   try {
+    console.log("Deepgram: Fetching audio from URL:", audioUrl.substring(0, 100) + "...");
+    
     // Download audio file as buffer using fetch (built-in in Node 18+)
     const audioResponse = await fetch(audioUrl);
     if (!audioResponse.ok) {
       throw new Error(`Failed to fetch audio: ${audioResponse.statusText}`);
     }
+    
+    // Get content type to verify it's audio
+    const contentType = audioResponse.headers.get("content-type");
+    console.log("Deepgram: Audio content-type:", contentType);
+    
     const audioBuffer = Buffer.from(await audioResponse.arrayBuffer());
+    console.log("Deepgram: Downloaded audio buffer size:", audioBuffer.length, "bytes");
+
+    if (audioBuffer.length === 0) {
+      throw new Error("Downloaded audio file is empty");
+    }
 
     // Call Deepgram REST API for transcription
+    console.log("Deepgram: Sending to API for transcription...");
     const deepgramResponse = await fetch(
       "https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&punctuate=true&utterances=true&utt_split=0.8",
       {
         method: "POST",
         headers: {
           Authorization: `Token ${env.DEEPGRAM_API_KEY}`,
-          "Content-Type": "audio/*",
+          "Content-Type": contentType || "audio/mpeg",
         },
         body: audioBuffer,
       }
@@ -72,10 +85,12 @@ export async function generateLrcFromAudio(audioUrl: string): Promise<string> {
 
     if (!deepgramResponse.ok) {
       const errorText = await deepgramResponse.text();
+      console.error("Deepgram API error:", errorText);
       throw new Error(`Deepgram API error: ${deepgramResponse.status} - ${errorText}`);
     }
 
     const result = await deepgramResponse.json() as DeepgramResponse;
+    console.log("Deepgram: Transcription received, utterances:", result.results.utterances?.length || 0);
 
     if (!result?.results?.utterances || result.results.utterances.length === 0) {
       throw new Error("No transcription results from Deepgram");
@@ -98,6 +113,7 @@ export async function generateLrcFromAudio(audioUrl: string): Promise<string> {
       }
     }
 
+    console.log("Deepgram: Generated", lrcLines.length, "LRC lines");
     return lrcLines.join("\n");
   } catch (error) {
     console.error("Deepgram LRC generation error:", error);
