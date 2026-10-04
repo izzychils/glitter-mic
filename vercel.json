@@ -1,8 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build -w @glitter-mic/web",
-  "devCommand": "npm run dev -w @glitter-mic/web",
-  "installCommand": "npm install",
-  "outputDirectory": "apps/web/dist",
-  "framework": null
-}
