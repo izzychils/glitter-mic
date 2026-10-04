@@ -57,13 +57,34 @@ export function KaraokeSession() {
     try {
       setLoading(true);
 
-      // Use song data from URL params (already have everything we need)
-      setSong({
-        id: songId!,
-        title: songTitle || "Unknown Title",
-        artist: songArtist || "Unknown Artist",
-        imageUrl: null,
-      });
+      // Try to fetch song details for better data, but don't fail if it 404s
+      try {
+        const songResponse = await sessionFetch(
+          `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}`
+        );
+
+        if (songResponse.ok) {
+          const songData = await songResponse.json();
+          setSong(songData);
+        } else {
+          // Use data from URL params as fallback (we have everything we need)
+          setSong({
+            id: songId!,
+            title: songTitle || "Unknown Title",
+            artist: songArtist || "Unknown Artist",
+            imageUrl: null,
+          });
+        }
+      } catch (error) {
+        // Fallback to URL params if detail endpoint fails
+        console.log("Using URL params for song data");
+        setSong({
+          id: songId!,
+          title: songTitle || "Unknown Title",
+          artist: songArtist || "Unknown Artist",
+          imageUrl: null,
+        });
+      }
 
       // Fetch streaming URL
       const streamResponse = await sessionFetch(
@@ -83,10 +104,8 @@ export function KaraokeSession() {
 
         if (lyricsResponse.ok) {
           const lyricsData = await lyricsResponse.json();
-          // Assuming backend returns LRC format
           setLrcContent(lyricsData.lyrics);
         } else {
-          // Use demo LRC data for now
           console.log("Using demo lyrics data");
           setLrcContent(getLrcForSong(songId!));
         }
