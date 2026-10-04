@@ -93,9 +93,17 @@ export function Auth({ onAuthSuccess }: AuthPageProps) {
         throw new Error(data.message || data.error || "Authentication failed");
       }
 
+      console.log("[Auth] Login/Signup response:", { 
+        hasSessionId: !!data.sessionId, 
+        sessionId: data.sessionId?.substring(0, 8) + "...",
+        responseKeys: Object.keys(data)
+      });
+
       // Store session ID for browsers that block third-party cookies
       if (data.sessionId) {
         storeSessionToken(data.sessionId);
+      } else {
+        console.warn("[Auth] No sessionId in response! Response keys:", Object.keys(data));
       }
 
       toast(mode === "login" ? "Welcome back!" : "Account created successfully!", "success");

@@ -5,6 +5,7 @@ import { Play, Pause, SkipBack, Volume2, Mic, X, Music } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { sessionFetch } from "../lib/session";
 
 interface Song {
   id: string;
@@ -49,9 +50,8 @@ export function KaraokeSession() {
       setLoading(true);
 
       // Fetch song details
-      const songResponse = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}`,
-        { credentials: "include" }
+      const songResponse = await sessionFetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}`
       );
 
       if (!songResponse.ok) throw new Error("Failed to fetch song");
@@ -60,9 +60,8 @@ export function KaraokeSession() {
       setSong(songData);
 
       // Fetch streaming URL
-      const streamResponse = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}/stream`,
-        { credentials: "include" }
+      const streamResponse = await sessionFetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}/stream`
       );
 
       if (!streamResponse.ok) throw new Error("Failed to get stream URL");
@@ -72,9 +71,8 @@ export function KaraokeSession() {
 
       // Fetch lyrics if available
       try {
-        const lyricsResponse = await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}/lyrics`,
-          { credentials: "include" }
+        const lyricsResponse = await sessionFetch(
+          `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}/lyrics`
         );
 
         if (lyricsResponse.ok) {

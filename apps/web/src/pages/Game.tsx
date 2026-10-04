@@ -177,13 +177,15 @@ export function Game() {
 
     toast(`Starting ${selectedMode} with "${song.title}"...`, "success");
     
-    // Navigate to karaoke session with song and mode data
-    navigate("/session", { 
-      state: { 
-        song,
-        mode: selectedMode 
-      } 
+    // Navigate to karaoke session with song data as URL parameters
+    const params = new URLSearchParams({
+      songId: song.id,
+      title: song.title,
+      artist: song.artist,
+      mode: selectedMode,
     });
+    
+    navigate(`/session?${params.toString()}`);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
