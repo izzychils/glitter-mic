@@ -90,7 +90,7 @@ export function Game() {
       setSongs(data.tracks);
 
       if (data.tracks.length === 0) {
-        toast("No songs found. Try a different search.", "info");
+        toast("No songs with previews found. Try a different search - popular songs usually have previews!", "info");
       }
     } catch (error) {
       toast("Failed to search songs. Please try again.", "error");
@@ -108,11 +108,6 @@ export function Game() {
   const handleSongSelect = (song: Song) => {
     if (!selectedMode) {
       toast("Please select a game mode first", "info");
-      return;
-    }
-
-    if (!song.hasPreview || !song.audioUrl) {
-      toast("This song doesn't have a preview available", "error");
       return;
     }
 
@@ -251,16 +246,12 @@ export function Game() {
                   <div className="min-w-0 flex-1">
                     <h4 className="truncate font-semibold text-white">{song.title}</h4>
                     <p className="truncate text-sm text-white/60">{song.artist}</p>
-                    {!song.hasPreview && (
-                      <p className="mt-1 text-xs text-blood-red">No preview available</p>
-                    )}
                   </div>
                   <Button
                     size="sm"
                     leftIcon={Play}
                     className="shrink-0"
                     onClick={() => handleSongSelect(song)}
-                    disabled={!song.hasPreview}
                   >
                     <span className="hidden sm:inline">Select</span>
                   </Button>
@@ -271,7 +262,9 @@ export function Game() {
             <div className="mt-8 rounded-xl border border-white/10 bg-navy-dark/50 p-6 text-center">
               <Music className="mx-auto mb-3 h-12 w-12 text-white/30" />
               <p className="text-sm text-white/50">
-                {searchQuery ? "No results. Try searching for a song or artist." : "Search for songs to get started"}
+                {searchQuery 
+                  ? "No songs with previews found. Try searching for popular songs!" 
+                  : "Search for songs to get started. Popular songs usually have 30-second previews."}
               </p>
               <p className="mt-1 text-xs text-white/30">Powered by Spotify</p>
             </div>

@@ -86,6 +86,9 @@ class SpotifyService {
     const token = await this.getAccessToken();
 
     try {
+      // Request more tracks than needed since we'll filter out those without previews
+      const requestLimit = Math.min(limit * 3, 50);
+      
       const response = await axios.get<SpotifySearchResponse>(
         "https://api.spotify.com/v1/search",
         {
@@ -95,13 +98,18 @@ class SpotifyService {
           params: {
             q: query,
             type: "track",
-            limit,
+            limit: requestLimit,
             market: "US", // Required for preview URLs
           },
         }
       );
 
-      return response.data.tracks.items;
+      // Filter to only tracks with preview URLs and limit to requested amount
+      const tracksWithPreviews = response.data.tracks.items
+        .filter((track) => track.preview_url !== null)
+        .slice(0, limit);
+
+      return tracksWithPreviews;
     } catch (error) {
       if (error instanceof AxiosError) {
         logger.error("Spotify search failed", {
