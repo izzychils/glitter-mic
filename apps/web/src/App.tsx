@@ -3,6 +3,7 @@ import { Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "./components/AnimatedBackground";
 import { Auth } from "./pages/Auth";
 import { Game } from "./pages/Game";
+import { KaraokeSession } from "./pages/KaraokeSession";
 import { DesignSystem } from "./pages/DesignSystem";
 import { NotFound } from "./pages/NotFound";
 import { LoadingScreen } from "./components/LoadingSpinner";
@@ -51,6 +52,10 @@ export default function App() {
         <Route
           path="/game"
           element={authenticated ? <Game /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/session"
+          element={authenticated ? <KaraokeSession /> : <Navigate to="/" replace />}
         />
         <Route path="/design" element={<DesignSystem />} />
         <Route path="*" element={<NotFound />} />

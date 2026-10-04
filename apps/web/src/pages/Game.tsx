@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mic, Music, Users, Trophy, LogOut, Search, Play } from "lucide-react";
 import { Button } from "../components/ui/Button";
@@ -49,6 +50,7 @@ const GENRES: { value: Genre; label: string }[] = [
 ];
 
 export function Game() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -174,8 +176,15 @@ export function Game() {
       return;
     }
 
-    toast(`Starting ${selectedMode} with "${song.title}"...`, "info");
-    // TODO: Navigate to game session
+    toast(`Starting ${selectedMode} with "${song.title}"...`, "success");
+    
+    // Navigate to karaoke session with song and mode data
+    navigate("/session", { 
+      state: { 
+        song,
+        mode: selectedMode 
+      } 
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
