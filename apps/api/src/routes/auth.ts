@@ -158,8 +158,16 @@ router.post("/login", async (req, res) => {
  * POST /api/auth/logout
  * Log out the current user
  */
-router.post("/logout", requireAuth, (req, res) => {
-  const username = req.session.username;
+router.post("/logout", (req, res) => {
+  const username = req.session?.username;
+
+  // If no session exists, just return success
+  if (!req.session || !req.session.userId) {
+    res.clearCookie("glitter.sid");
+    return res.json({
+      message: "Already logged out",
+    });
+  }
 
   req.session.destroy((err) => {
     if (err) {
