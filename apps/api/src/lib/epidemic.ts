@@ -122,18 +122,16 @@ class EpidemicSoundService {
 
   /**
    * Get track details by ID using batch metadata endpoint
-   * Per Epidemic Sound docs: must use URLSearchParams.append for proper formatting
+   * Must use proper query string format per Epidemic Sound docs
    */
   async getTrack(trackId: string, userId?: string): Promise<EpidemicTrack> {
     try {
-      // Build URL with URLSearchParams as shown in Epidemic Sound docs
+      // Per Epidemic docs: use URLSearchParams with append
       const params = new URLSearchParams();
       params.append('trackId', trackId);
       
-      const url = `${this.baseURL}/tracks/metadata?${params.toString()}`;
-      
       const response = await axios.get<{ tracks: EpidemicTrack[] }>(
-        url,
+        `${this.baseURL}/tracks/metadata?${params.toString()}`,
         {
           headers: this.getHeaders(userId),
         }
@@ -141,14 +139,18 @@ class EpidemicSoundService {
 
       logger.info("Fetched track metadata", {
         trackId,
-        url,
         found: response.data.tracks?.length > 0,
         trackTitle: response.data.tracks?.[0]?.title,
+        fullUrl: `${this.baseURL}/tracks/metadata?${params.toString()}`,
       });
 
       const track = response.data.tracks?.[0];
       if (!track) {
-        logger.error("Track not found in batch response", { trackId, responseData: response.data });
+        logger.error("Track not found in batch response", { 
+          trackId, 
+          responseData: response.data,
+          url: `${this.baseURL}/tracks/metadata?${params.toString()}`,
+        });
         throw new Error("Track not found");
       }
 
