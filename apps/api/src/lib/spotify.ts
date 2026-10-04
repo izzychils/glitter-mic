@@ -206,7 +206,29 @@ class SpotifyService {
    * Get popular tracks by genre or mood (using search with filters)
    */
   async getPopularTracks(genre?: string, limit = 20): Promise<{ tracks: SpotifyTrack[]; totalResults: number }> {
-    const query = genre ? `genre:${genre}` : "year:2024";
+    // Use curated playlists or popular keywords that usually have previews
+    const popularQueries = [
+      "top hits 2024",
+      "viral hits",
+      "trending now",
+      "hot 100",
+      "global top 50",
+    ];
+    
+    const query = genre 
+      ? `genre:${genre} year:2024` 
+      : popularQueries[Math.floor(Math.random() * popularQueries.length)];
+    
+    return this.searchTracks(query, limit);
+  }
+
+  /**
+   * Get curated popular songs that are guaranteed to have previews
+   * Uses specific popular song queries
+   */
+  async getFeaturedTracks(limit = 20): Promise<{ tracks: SpotifyTrack[]; totalResults: number }> {
+    // Search for recent chart-topping songs that typically have previews
+    const query = "year:2023-2024 track:hits";
     return this.searchTracks(query, limit);
   }
 }

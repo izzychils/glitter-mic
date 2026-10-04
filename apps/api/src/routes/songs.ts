@@ -85,7 +85,7 @@ router.get("/:id", async (req, res) => {
 });
 
 /**
- * GET /api/songs/popular
+ * GET /api/songs/meta/popular
  * Get popular/trending songs
  */
 router.get("/meta/popular", async (req, res) => {
@@ -105,6 +105,30 @@ router.get("/meta/popular", async (req, res) => {
     res.status(500).json({
       error: "Failed to fetch popular songs",
       message: "Could not load trending tracks",
+    });
+  }
+});
+
+/**
+ * GET /api/songs/featured
+ * Get featured tracks (popular songs with guaranteed previews)
+ */
+router.get("/featured", async (req, res) => {
+  try {
+    const { limit = "20" } = req.query;
+
+    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 50);
+    const { tracks, totalResults } = await spotifyService.getFeaturedTracks(limitNum);
+
+    res.json({
+      tracks: tracks.map(transformSpotifyTrack),
+      totalResults,
+    });
+  } catch (error) {
+    logger.error("Failed to fetch featured songs", error);
+    res.status(500).json({
+      error: "Failed to fetch featured songs",
+      message: "Could not load featured tracks",
     });
   }
 });

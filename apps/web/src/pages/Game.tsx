@@ -61,6 +61,7 @@ export function Game() {
 
   useEffect(() => {
     fetchUser();
+    loadFeaturedSongs(); // Load popular songs on mount
   }, []);
 
   const fetchUser = async () => {
@@ -77,6 +78,26 @@ export function Game() {
       toast("Failed to load user data", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFeaturedSongs = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/featured?limit=20`,
+        { credentials: "include" }
+      );
+
+      if (!response.ok) throw new Error("Failed to load featured songs");
+
+      const data = await response.json();
+      if (data.tracks.length > 0) {
+        setSongs(data.tracks);
+        setSearchStats({ total: data.tracks.length, totalResults: data.totalResults });
+      }
+    } catch (error) {
+      console.error("Failed to load featured songs:", error);
+      // Don't show error toast - just silently fail and let user search
     }
   };
 
@@ -242,7 +263,14 @@ export function Game() {
           transition={{ delay: 0.3 }}
           className="mb-6 rounded-2xl border border-white/10 bg-navy-lighter/90 p-6 shadow-xl md:mb-8 md:p-8"
         >
-          <h2 className="mb-6 text-xl font-bold text-white md:text-2xl">Choose Your Song</h2>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white md:text-2xl">
+              {songs.length > 0 && !searchQuery ? "Featured Songs" : "Choose Your Song"}
+            </h2>
+            {songs.length > 0 && !searchQuery && (
+              <span className="text-xs text-white/50">Popular tracks with previews</span>
+            )}
+          </div>
 
           {/* Search Filters */}
           <div className="mb-4 flex flex-col gap-3 sm:flex-row">
