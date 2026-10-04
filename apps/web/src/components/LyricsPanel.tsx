@@ -45,11 +45,30 @@ export function LyricsPanel({ lines, currentLineIndex, isRecording = false }: Ly
     );
   }
 
-  // Show only 3 lines: previous, current, next for cleaner look
+  // Show 8 lines total: 4 before, current, 3 after for gradient fade effect
   const visibleLines = lines.slice(
-    Math.max(0, currentLineIndex - 1),
-    Math.min(lines.length, currentLineIndex + 2)
+    Math.max(0, currentLineIndex - 4),
+    Math.min(lines.length, currentLineIndex + 4)
   );
+
+  // Calculate opacity gradient: center (current) is 1.0, fades outward
+  const getOpacity = (lineIndex: number): number => {
+    const actualIndex = lines.findIndex(l => l.index === lineIndex);
+    const distance = Math.abs(actualIndex - currentLineIndex);
+    
+    // Distance 0 (current): 1.0
+    // Distance 1: 0.8
+    // Distance 2: 0.6
+    // Distance 3: 0.4
+    // Distance 4+: 0.2
+    const opacityMap: Record<number, number> = {
+      0: 1.0,
+      1: 0.8,
+      2: 0.6,
+      3: 0.4,
+    };
+    return opacityMap[distance] ?? 0.2;
+  };
 
   return (
     <div
@@ -76,13 +95,14 @@ export function LyricsPanel({ lines, currentLineIndex, isRecording = false }: Ly
         )}
       </AnimatePresence>
 
-      {/* Lyrics lines - centered, no scrollbar, smooth transitions */}
-      <div className="relative flex w-full flex-col items-center justify-center gap-8">
+      {/* Lyrics lines - 8 lines with gradient fade from center */}
+      <div className="relative flex w-full flex-col items-center justify-center gap-6">
         <AnimatePresence mode="wait">
           {visibleLines.map((line) => {
             const actualIndex = lines.findIndex(l => l.index === line.index);
             const isCurrent = actualIndex === currentLineIndex;
-            const isPast = actualIndex < currentLineIndex;
+            const distance = Math.abs(actualIndex - currentLineIndex);
+            const opacity = getOpacity(line.index);
 
             return (
               <motion.div
@@ -94,10 +114,10 @@ export function LyricsPanel({ lines, currentLineIndex, isRecording = false }: Ly
                   scale: 0.9,
                 }}
                 animate={{
-                  opacity: isCurrent ? 1 : isPast ? 0.2 : 0.4,
+                  opacity: opacity,
                   y: 0,
-                  scale: isCurrent ? 1 : 0.85,
-                  filter: isCurrent ? "blur(0px)" : "blur(1px)",
+                  scale: isCurrent ? 1 : 0.9 - (distance * 0.02),
+                  filter: isCurrent ? "blur(0px)" : `blur(${distance * 0.5}px)`,
                 }}
                 exit={{ 
                   opacity: 0, 
@@ -113,9 +133,7 @@ export function LyricsPanel({ lines, currentLineIndex, isRecording = false }: Ly
                   w-full text-center transition-all
                   ${isCurrent 
                     ? "text-3xl font-bold leading-relaxed text-white md:text-4xl" 
-                    : isPast
-                    ? "text-xl text-white/30 md:text-2xl"
-                    : "text-xl text-white/40 md:text-2xl"
+                    : "text-xl text-white md:text-2xl"
                   }
                 `}
                 style={{
@@ -129,7 +147,7 @@ export function LyricsPanel({ lines, currentLineIndex, isRecording = false }: Ly
         </AnimatePresence>
       </div>
 
-      {/* Gradient overlays for fade effect */}
+      {/* Gradient overlays for fade effect at edges */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-navy-lighter/90 via-navy-lighter/50 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-navy-lighter/90 via-navy-lighter/50 to-transparent" />
     </div>

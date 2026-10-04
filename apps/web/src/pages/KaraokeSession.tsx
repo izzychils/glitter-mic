@@ -37,6 +37,7 @@ export function KaraokeSession() {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isRecording, setIsRecording] = useState(false);
+  const [generatingLyrics, setGeneratingLyrics] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -230,6 +231,35 @@ export function KaraokeSession() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const generatePerfectLyrics = async () => {
+    if (!songId) return;
+
+    try {
+      setGeneratingLyrics(true);
+      toast("🎵 Generating perfect lyrics with Deepgram...", "info");
+
+      const response = await sessionFetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}/lyrics/generate`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate lyrics");
+      }
+
+      const data = await response.json();
+      setLrcContent(data.lyrics);
+      toast("✅ Perfect lyrics generated!", "success");
+    } catch (error) {
+      console.error("Failed to generate lyrics:", error);
+      toast("Failed to generate lyrics. Using existing ones.", "error");
+    } finally {
+      setGeneratingLyrics(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -394,6 +424,17 @@ export function KaraokeSession() {
                 <>🎵 Sing along! Your pitch and timing are being scored in real-time.</>
               )}
             </div>
+
+            {/* Generate Perfect Lyrics Button */}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={generatePerfectLyrics}
+              disabled={generatingLyrics || isRecording}
+              className="w-full"
+            >
+              {generatingLyrics ? "Generating Perfect Lyrics..." : "🎵 Generate Perfect Lyrics (AI)"}
+            </Button>
           </motion.div>
 
           {/* Right Side: Lyrics Panel */}

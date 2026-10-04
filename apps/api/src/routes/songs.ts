@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { epidemicService, type EpidemicTrack } from "../lib/epidemic";
+import { generateLrcFromAudio } from "../lib/deepgram";
 import { logger } from "../lib/logger";
 
 const router = Router();
@@ -176,6 +177,49 @@ router.get("/:id/lyrics", async (req, res) => {
   } catch (error) {
     logger.error("Failed to get lyrics", { trackId: req.params.id, error });
     res.json({ lyrics: null });
+  }
+});
+
+/**
+ * POST /api/songs/:id/lyrics/generate
+ * Generate LRC lyrics from audio using Deepgram transcription
+ * This is an async operation that downloads the audio and transcribes it
+ */
+router.post("/:id/lyrics/generate", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.session.userId;
+
+    logger.info("Generating LRC lyrics with Deepgram", { trackId: id });
+
+    // Get streaming URL for the audio
+    const streamData = await epidemicService.getStreamingUrl(id, userId);
+    
+    if (!streamData.url) {
+      return res.status(400).json({
+        error: "No audio URL available",
+        message: "Could not get audio URL for transcription",
+      });
+    }
+
+    // Generate LRC from audio using Deepgram
+    const lrcLyrics = await generateLrcFromAudio(streamData.url);
+
+    // TODO: Cache in database
+    // await db.query("INSERT INTO lyrics_cache (track_id, lrc, generated_at) VALUES ($1, $2, NOW()) ON CONFLICT (track_id) DO UPDATE SET lrc = $2, generated_at = NOW()", [id, lrcLyrics]);
+
+    logger.info("LRC generated successfully", { trackId: id, linesCount: lrcLyrics.split("\n").length });
+
+    res.json({ 
+      lyrics: lrcLyrics,
+      generated: true,
+    });
+  } catch (error) {
+    logger.error("Failed to generate LRC lyrics", { trackId: req.params.id, error });
+    res.status(500).json({
+      error: "Failed to generate lyrics",
+      message: error instanceof Error ? error.message : "Could not generate LRC from audio",
+    });
   }
 });
 
