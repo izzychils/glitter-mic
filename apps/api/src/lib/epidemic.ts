@@ -77,53 +77,8 @@ class EpidemicSoundService {
   }
 
   /**
-   * Check if a track has lyrics available
-   * Optimized: makes request but returns quickly
-   */
-  private async hasLyricsAvailable(trackId: string, userId?: string): Promise<boolean> {
-    try {
-      const lyrics = await this.getLyrics(trackId, userId);
-      return lyrics !== null && lyrics.trim().length > 0;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Filter tracks to only those with lyrics available
-   * Checks lyrics in parallel for better performance
-   */
-  private async filterTracksWithLyrics(
-    tracks: EpidemicTrack[],
-    userId?: string,
-    limit: number = 20
-  ): Promise<EpidemicTrack[]> {
-    // Check all tracks in parallel (much faster than sequential)
-    const lyricsChecks = await Promise.all(
-      tracks.map(async (track) => ({
-        track,
-        hasLyrics: await this.hasLyricsAvailable(track.id, userId),
-      }))
-    );
-
-    // Filter to only tracks with lyrics
-    const tracksWithLyrics = lyricsChecks
-      .filter((result) => result.hasLyrics)
-      .map((result) => result.track)
-      .slice(0, limit);
-
-    logger.info("Lyrics filtering complete", {
-      totalChecked: tracks.length,
-      withLyrics: tracksWithLyrics.length,
-      withoutLyrics: tracks.length - tracksWithLyrics.length,
-    });
-
-    return tracksWithLyrics;
-  }
-
-  /**
    * Search for tracks on Epidemic Sound
-   * Returns ONLY tracks with actual lyrics available for karaoke
+   * Filters for tracks with lead vocals (karaoke-ready)
    */
   async searchTracks(
     query: string,
@@ -131,9 +86,6 @@ class EpidemicSoundService {
     userId?: string
   ): Promise<{ tracks: EpidemicTrack[]; total: number }> {
     try {
-      // Fetch 3x more than requested to account for filtering
-      const fetchLimit = Math.min(limit * 3, 60);
-      
       const response = await axios.get<EpidemicSearchResponse>(
         `${this.baseURL}/tracks/search`,
         {
@@ -141,28 +93,21 @@ class EpidemicSoundService {
           params: {
             term: query,
             vocalType: "LEAD", // Only tracks with sung lead vocals
-            limit: fetchLimit,
+            limit: Math.min(limit, 60),
             sort: "Relevance",
             order: "desc",
           },
         }
       );
 
-      logger.info("Search results fetched, checking lyrics", {
+      logger.info("Search results fetched", {
         query,
         fetched: response.data.tracks.length,
       });
 
-      // Filter in parallel for speed
-      const tracksWithLyrics = await this.filterTracksWithLyrics(
-        response.data.tracks,
-        userId,
-        limit
-      );
-
       return {
-        tracks: tracksWithLyrics,
-        total: tracksWithLyrics.length,
+        tracks: response.data.tracks,
+        total: response.data.pagination.total || response.data.tracks.length,
       };
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -305,13 +250,10 @@ class EpidemicSoundService {
 
   /**
    * Get featured/curated tracks from collections
-   * Returns ONLY tracks with actual lyrics available for karaoke
+   * Filters for tracks with lead vocals (karaoke-ready)
    */
   async getFeaturedTracks(limit = 20, userId?: string): Promise<{ tracks: EpidemicTrack[]; total: number }> {
     try {
-      // Fetch 3x more than requested to account for filtering
-      const fetchLimit = Math.min(limit * 3, 60);
-      
       const response = await axios.get<EpidemicSearchResponse>(
         `${this.baseURL}/tracks/search`,
         {
@@ -319,27 +261,20 @@ class EpidemicSoundService {
           params: {
             term: "popular",
             vocalType: "LEAD", // Only tracks with sung lead vocals
-            limit: fetchLimit,
+            limit: Math.min(limit, 60),
             sort: "Popularity",
             order: "desc",
           },
         }
       );
 
-      logger.info("Featured tracks fetched, checking lyrics", {
+      logger.info("Featured tracks fetched", {
         fetched: response.data.tracks.length,
       });
 
-      // Filter in parallel for speed
-      const tracksWithLyrics = await this.filterTracksWithLyrics(
-        response.data.tracks,
-        userId,
-        limit
-      );
-
       return {
-        tracks: tracksWithLyrics,
-        total: tracksWithLyrics.length,
+        tracks: response.data.tracks,
+        total: response.data.pagination.total || response.data.tracks.length,
       };
     } catch (error) {
       if (error instanceof AxiosError) {
