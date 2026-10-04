@@ -1,4 +1,5 @@
 import session from "express-session";
+import { Request, Response, NextFunction } from "express";
 import RedisStore from "connect-redis";
 import { redis } from "./redis";
 import { env } from "./env";
@@ -58,5 +59,48 @@ export const sessionMiddleware = session({
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    // Don't set domain for cross-origin - let browser handle it
   },
 });
+
+/**
+ * Middleware to restore session from X-Session-Token header if cookie is not available
+ * This helps with browsers that block third-party cookies (like Safari)
+ */
+export function sessionHeaderFallback(req: Request, res: Response, next: NextFunction) {
+  // If session already exists via cookie, continue
+  if (req.session && req.session.userId) {
+    return next();
+  }
+
+  // Check for session token in header
+  const sessionToken = req.headers["x-session-token"] as string;
+  if (!sessionToken) {
+    return next();
+  }
+
+  // Try to load session from Redis using the token
+  const sessionKey = `glitter-mic:session:${sessionToken}`;
+  redis
+    .get(sessionKey)
+    .then((sessionData) => {
+      if (sessionData && typeof sessionData === "string") {
+        try {
+          const parsed = JSON.parse(sessionData);
+          if (parsed.userId) {
+            // Manually attach session data
+            req.session.userId = parsed.userId;
+            req.session.username = parsed.username;
+          }
+        } catch (error) {
+          // Invalid session data, ignore
+        }
+      }
+      next();
+    })
+    .catch(() => {
+      // Error loading session, continue anyway
+      next();
+    });
+}
+

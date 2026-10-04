@@ -5,6 +5,7 @@ import { Mic, Music, Users, Trophy, LogOut, Search, Play } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { sessionFetch, clearSessionToken } from "../lib/session";
 
 interface User {
   id: string;
@@ -68,9 +69,7 @@ export function Game() {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/auth/me`, {
-        credentials: "include",
-      });
+      const response = await sessionFetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/auth/me`);
 
       if (!response.ok) throw new Error("Failed to fetch user");
 
@@ -85,9 +84,8 @@ export function Game() {
 
   const loadFeaturedSongs = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/featured?limit=20`,
-        { credentials: "include" }
+      const response = await sessionFetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/featured?limit=20`
       );
 
       if (!response.ok) throw new Error("Failed to load featured songs");
@@ -105,13 +103,15 @@ export function Game() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/auth/logout`, {
+      const response = await sessionFetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/auth/logout`, {
         method: "POST",
-        credentials: "include",
       });
 
       if (!response.ok) throw new Error("Logout failed");
 
+      // Clear session token from localStorage
+      clearSessionToken();
+      
       toast("Logged out successfully", "success");
       window.location.reload();
     } catch (error) {
@@ -136,9 +136,8 @@ export function Game() {
         finalQuery = `${searchQuery} genre:${selectedGenre}`;
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs?search=${encodeURIComponent(finalQuery)}`,
-        { credentials: "include" }
+      const response = await sessionFetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs?search=${encodeURIComponent(finalQuery)}`
       );
 
       if (!response.ok) throw new Error("Search failed");

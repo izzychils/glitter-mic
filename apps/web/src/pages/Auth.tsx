@@ -4,6 +4,7 @@ import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-reac
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { storeSessionToken } from "../lib/session";
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
@@ -90,6 +91,11 @@ export function Auth({ onAuthSuccess }: AuthPageProps) {
           setErrors(data.details);
         }
         throw new Error(data.message || data.error || "Authentication failed");
+      }
+
+      // Store session ID for browsers that block third-party cookies
+      if (data.sessionId) {
+        storeSessionToken(data.sessionId);
       }
 
       toast(mode === "login" ? "Welcome back!" : "Account created successfully!", "success");

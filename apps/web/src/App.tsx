@@ -7,6 +7,7 @@ import { KaraokeSession } from "./pages/KaraokeSession";
 import { DesignSystem } from "./pages/DesignSystem";
 import { NotFound } from "./pages/NotFound";
 import { LoadingScreen } from "./components/LoadingSpinner";
+import { sessionFetch } from "./lib/session";
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -19,9 +20,7 @@ export default function App() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/auth/session`, {
-        credentials: "include",
-      });
+      const response = await sessionFetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/auth/session`);
 
       const data = await response.json();
       setAuthenticated(data.authenticated);

@@ -72,13 +72,22 @@ router.post("/signup", async (req, res) => {
     req.session.userId = user.id;
     req.session.username = user.username;
 
+    // Force session save before responding (important for cross-origin)
+    await new Promise<void>((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
     await userRepo.updateLastLogin(user.id);
 
-    logger.info(`User signed up and logged in: ${user.username}`);
+    logger.info(`User signed up and logged in: ${user.username}, sessionId: ${req.sessionID}`);
 
     res.status(201).json({
       message: "Account created successfully",
       user: toPublicUser(user),
+      sessionId: req.sessionID, // Send session ID for localStorage backup
     });
   } catch (error) {
     logger.error("Signup error", error);
@@ -137,13 +146,22 @@ router.post("/login", async (req, res) => {
     req.session.userId = user.id;
     req.session.username = user.username;
 
+    // Force session save before responding (important for cross-origin)
+    await new Promise<void>((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
     await userRepo.updateLastLogin(user.id);
 
-    logger.info(`User logged in: ${user.username}`);
+    logger.info(`User logged in: ${user.username}, sessionId: ${req.sessionID}`);
 
     res.json({
       message: "Logged in successfully",
       user: toPublicUser(user),
+      sessionId: req.sessionID, // Send session ID for localStorage backup
     });
   } catch (error) {
     logger.error("Login error", error);
