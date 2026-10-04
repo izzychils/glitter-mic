@@ -228,6 +228,7 @@ class EpidemicSoundService {
 
   /**
    * Get lyrics for a track
+   * Converts plain text lyrics to LRC format for karaoke sync
    */
   async getLyrics(trackId: string, userId?: string): Promise<string | null> {
     try {
@@ -238,7 +239,25 @@ class EpidemicSoundService {
         }
       );
 
-      return response.data.lyrics;
+      const plainLyrics = response.data.lyrics;
+      
+      if (!plainLyrics || plainLyrics.trim().length === 0) {
+        return null;
+      }
+
+      // Convert plain text lyrics to LRC format
+      // Epidemic returns newline-separated lyrics without timestamps
+      // We'll add fake timestamps every 3 seconds for basic sync
+      const lines = plainLyrics.split('\n').filter(line => line.trim().length > 0);
+      const lrcLines = lines.map((line, index) => {
+        const seconds = index * 3; // 3 seconds per line
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        const timestamp = `[${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}.00]`;
+        return `${timestamp}${line}`;
+      });
+
+      return lrcLines.join('\n');
     } catch (error) {
       if (error instanceof AxiosError) {
         logger.error("Failed to get lyrics", {
