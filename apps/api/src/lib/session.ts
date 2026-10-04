@@ -1,5 +1,5 @@
 import session from "express-session";
-import { default as connectRedis } from "connect-redis";
+import RedisStore from "connect-redis";
 import { redis } from "./redis";
 import { env } from "./env";
 
@@ -11,14 +11,12 @@ declare module "express-session" {
   }
 }
 
-// Create RedisStore
-const RedisStore = connectRedis(session);
-
 // Configure Redis session store
 export const sessionMiddleware = session({
   store: new RedisStore({
     client: redis as any,
     prefix: "glitter-mic:session:",
+    ttl: 86400 * 7, // 7 days in seconds
   }),
   secret: env.SESSION_SECRET,
   resave: false,
