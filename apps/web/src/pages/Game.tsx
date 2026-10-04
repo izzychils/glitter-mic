@@ -56,6 +56,7 @@ export function Game() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [searchStats, setSearchStats] = useState<{ total: number; totalResults: number } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -103,6 +104,7 @@ export function Game() {
 
     setSearching(true);
     setSongs([]);
+    setSearchStats(null);
 
     try {
       // Build search query with genre filter
@@ -120,9 +122,17 @@ export function Game() {
 
       const data = await response.json();
       setSongs(data.tracks);
+      setSearchStats({ total: data.total, totalResults: data.totalResults });
 
-      if (data.tracks.length === 0) {
-        toast("No songs with previews found. Try a different search - popular songs usually have previews!", "info");
+      if (data.total === 0 && data.totalResults > 0) {
+        // Found songs but none have previews
+        toast(
+          `Found ${data.totalResults} songs, but none have previews. Try searching for specific song titles like "7 rings" or "thank u, next"!`,
+          "info"
+        );
+      } else if (data.total === 0) {
+        // No songs found at all
+        toast("No songs found. Try a different search term or artist!", "info");
       }
     } catch (error) {
       toast("Failed to search songs. Please try again.", "error");
@@ -314,12 +324,49 @@ export function Game() {
           ) : (
             <div className="mt-8 rounded-xl border border-white/10 bg-navy-dark/50 p-6 text-center">
               <Music className="mx-auto mb-3 h-12 w-12 text-white/30" />
-              <p className="text-sm text-white/50">
-                {searchQuery 
-                  ? "No songs with previews found. Try searching for popular songs!" 
-                  : "Search for songs to get started. Popular songs usually have 30-second previews."}
-              </p>
-              <p className="mt-1 text-xs text-white/30">Powered by Spotify</p>
+              {searchStats && searchStats.totalResults > 0 ? (
+                <>
+                  <p className="text-sm text-white/50">
+                    Found {searchStats.totalResults} songs on Spotify, but none have 30-second previews available.
+                  </p>
+                  <p className="mt-3 text-sm font-semibold text-blood-pink">
+                    💡 Try searching for specific song titles instead:
+                  </p>
+                  <div className="mt-2 space-y-1 text-xs text-white/40">
+                    <p>• "7 rings" instead of "ariana grande"</p>
+                    <p>• "positions" by Ariana Grande</p>
+                    <p>• Recent chart hits usually have previews</p>
+                  </div>
+                </>
+              ) : searchQuery ? (
+                <>
+                  <p className="text-sm text-white/50">
+                    No songs found. Try a different search term!
+                  </p>
+                  <p className="mt-3 text-sm font-semibold text-blood-pink">
+                    Search tips:
+                  </p>
+                  <div className="mt-2 space-y-1 text-xs text-white/40">
+                    <p>• Use song titles: "Blinding Lights", "Shape of You"</p>
+                    <p>• Try artist + song: "The Weeknd Starboy"</p>
+                    <p>• Popular songs have better preview availability</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-white/50">
+                    Search for songs to get started. Popular songs usually have 30-second previews.
+                  </p>
+                  <p className="mt-3 text-sm font-semibold text-blood-pink">
+                    Try these popular searches:
+                  </p>
+                  <div className="mt-2 space-y-1 text-xs text-white/40">
+                    <p>• "Blinding Lights" • "Levitating" • "Anti-Hero"</p>
+                    <p>• "As It Was" • "Flowers" • "Cruel Summer"</p>
+                  </div>
+                </>
+              )}
+              <p className="mt-4 text-xs text-white/30">Powered by Spotify</p>
             </div>
           )}
         </motion.div>

@@ -38,11 +38,12 @@ router.get("/", async (req, res) => {
     }
 
     const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 50);
-    const tracks = await spotifyService.searchTracks(search, limitNum);
+    const { tracks, totalResults } = await spotifyService.searchTracks(search, limitNum);
 
     res.json({
       tracks: tracks.map(transformSpotifyTrack),
       total: tracks.length,
+      totalResults, // Total results in Spotify (before preview filtering)
     });
   } catch (error: any) {
     logger.error("Failed to search songs", error);

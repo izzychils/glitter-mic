@@ -23,13 +23,15 @@ interface SpotifyTrack {
   };
 }
 
+interface SpotifySearchResult {
+  items: SpotifyTrack[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 interface SpotifySearchResponse {
-  tracks: {
-    items: SpotifyTrack[];
-    total: number;
-    limit: number;
-    offset: number;
-  };
+  tracks: SpotifySearchResult;
 }
 
 class SpotifyService {
@@ -82,7 +84,7 @@ class SpotifyService {
   /**
    * Search for tracks on Spotify
    */
-  async searchTracks(query: string, limit = 20): Promise<SpotifyTrack[]> {
+  async searchTracks(query: string, limit = 20): Promise<{ tracks: SpotifyTrack[]; totalResults: number }> {
     const token = await this.getAccessToken();
 
     try {
@@ -104,12 +106,23 @@ class SpotifyService {
         }
       );
 
+      const allTracks = response.data.tracks.items;
+      const totalResults = response.data.tracks.total;
+      
       // Filter to only tracks with preview URLs and limit to requested amount
-      const tracksWithPreviews = response.data.tracks.items
+      const tracksWithPreviews = allTracks
         .filter((track) => track.preview_url !== null)
         .slice(0, limit);
 
-      return tracksWithPreviews;
+      // Log stats to help debugging
+      logger.info("Spotify search results", {
+        query,
+        totalFound: allTracks.length,
+        totalInSpotify: totalResults,
+        withPreviews: tracksWithPreviews.length,
+      });
+
+      return { tracks: tracksWithPreviews, totalResults };
     } catch (error) {
       if (error instanceof AxiosError) {
         logger.error("Spotify search failed", {
