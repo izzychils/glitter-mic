@@ -3,6 +3,14 @@ import RedisStore from "connect-redis";
 import { redis } from "./redis";
 import { env } from "./env";
 
+// Extend express-session types
+declare module "express-session" {
+  interface SessionData {
+    userId?: string;
+    username?: string;
+  }
+}
+
 // Configure Redis session store
 export const sessionMiddleware = session({
   store: new (RedisStore as any)(session)({
@@ -20,15 +28,3 @@ export const sessionMiddleware = session({
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
   },
 });
-
-// Extend express-session types
-declare global {
-  namespace Express {
-    interface Request {
-      session: session.Session & {
-        userId?: string;
-        username?: string;
-      };
-    }
-  }
-}
