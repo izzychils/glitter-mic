@@ -23,10 +23,36 @@ interface Song {
   hasPreview: boolean;
 }
 
+type Genre = 
+  | "pop" 
+  | "rock" 
+  | "hip-hop" 
+  | "r&b" 
+  | "country" 
+  | "jazz" 
+  | "electronic" 
+  | "indie"
+  | "latin"
+  | "all";
+
+const GENRES: { value: Genre; label: string }[] = [
+  { value: "all", label: "All Genres" },
+  { value: "pop", label: "Pop" },
+  { value: "rock", label: "Rock" },
+  { value: "hip-hop", label: "Hip-Hop" },
+  { value: "r&b", label: "R&B" },
+  { value: "country", label: "Country" },
+  { value: "electronic", label: "Electronic" },
+  { value: "indie", label: "Indie" },
+  { value: "jazz", label: "Jazz" },
+  { value: "latin", label: "Latin" },
+];
+
 export function Game() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState<Genre>("all");
   const [songs, setSongs] = useState<Song[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
@@ -79,8 +105,14 @@ export function Game() {
     setSongs([]);
 
     try {
+      // Build search query with genre filter
+      let finalQuery = searchQuery;
+      if (selectedGenre !== "all") {
+        finalQuery = `${searchQuery} genre:${selectedGenre}`;
+      }
+
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs?search=${encodeURIComponent(searchQuery)}`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs?search=${encodeURIComponent(finalQuery)}`,
         { credentials: "include" }
       );
 
@@ -202,7 +234,8 @@ export function Game() {
         >
           <h2 className="mb-6 text-xl font-bold text-white md:text-2xl">Choose Your Song</h2>
 
-          <div className="mb-6 flex gap-3">
+          {/* Search Filters */}
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/50" />
               <input
@@ -214,9 +247,29 @@ export function Game() {
                 className="h-12 w-full rounded-xl border border-white/20 bg-navy-dark pl-12 pr-4 text-sm text-white placeholder:text-white/40 transition-all focus:border-blood-pink focus:outline-none focus:ring-2 focus:ring-blood-pink/50 md:h-14 md:text-base"
               />
             </div>
-            <Button size="lg" leftIcon={Search} onClick={handleSearch} disabled={searching}>
-              <span className="hidden sm:inline">{searching ? "Searching..." : "Search"}</span>
-              <Search className="sm:hidden" size={20} />
+            <select
+              value={selectedGenre}
+              onChange={(e) => setSelectedGenre(e.target.value as Genre)}
+              className="h-12 rounded-xl border border-white/20 bg-navy-dark px-4 text-sm text-white transition-all focus:border-blood-pink focus:outline-none focus:ring-2 focus:ring-blood-pink/50 md:h-14 md:text-base"
+            >
+              {GENRES.map((genre) => (
+                <option key={genre.value} value={genre.value}>
+                  {genre.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Search Button */}
+          <div className="mb-6">
+            <Button 
+              size="lg" 
+              leftIcon={Search} 
+              onClick={handleSearch} 
+              disabled={searching}
+              fullWidth
+            >
+              {searching ? "Searching..." : "Search"}
             </Button>
           </div>
 
