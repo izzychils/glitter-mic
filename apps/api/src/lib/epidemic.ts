@@ -229,28 +229,36 @@ class EpidemicSoundService {
    */
   async getFeaturedTracks(limit = 20, userId?: string): Promise<{ tracks: EpidemicTrack[]; total: number }> {
     try {
-      // Get first collection with tracks
-      const response = await axios.get<{ collections: Array<{ id: string; name: string; tracks: EpidemicTrack[] }> }>(
-        `${this.baseURL}/collections`,
+      // Instead of collections, let's search for popular/trending tracks
+      // Collections endpoint might not be available in all Epidemic Sound plans
+      const response = await axios.get<EpidemicSearchResponse>(
+        `${this.baseURL}/tracks/search`,
         {
           headers: this.getHeaders(userId),
           params: {
-            limit: 1,
+            term: "popular", // Search for popular tracks
+            limit: Math.min(limit, 60),
+            sort: "Relevance",
+            order: "desc",
           },
         }
       );
 
-      const firstCollection = response.data.collections[0];
-      if (!firstCollection || !firstCollection.tracks) {
-        return { tracks: [], total: 0 };
-      }
+      logger.info("Featured tracks loaded from search", {
+        totalFound: response.data.tracks.length,
+        firstId: response.data.tracks[0]?.id,
+        firstTitle: response.data.tracks[0]?.title,
+      });
 
-      const tracks = firstCollection.tracks.slice(0, limit);
-      return { tracks, total: tracks.length };
+      return {
+        tracks: response.data.tracks,
+        total: response.data.pagination.total || response.data.tracks.length,
+      };
     } catch (error) {
       if (error instanceof AxiosError) {
         logger.error("Failed to get featured tracks", {
           status: error.response?.status,
+          data: error.response?.data,
         });
       }
       throw new Error("Failed to get featured tracks");

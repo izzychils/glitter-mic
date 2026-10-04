@@ -72,6 +72,12 @@ router.get("/featured", async (req, res) => {
     const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 60);
     const { tracks, total } = await epidemicService.getFeaturedTracks(limitNum, userId);
 
+    logger.info("Featured tracks fetched", { 
+      count: tracks.length, 
+      firstTrackId: tracks[0]?.id,
+      firstTrackTitle: tracks[0]?.title 
+    });
+
     res.json({
       tracks: tracks.map(transformEpidemicTrack),
       totalResults: total,
