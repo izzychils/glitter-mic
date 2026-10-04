@@ -13,7 +13,7 @@ declare module "express-session" {
 
 // Configure Redis session store
 export const sessionMiddleware = session({
-  store: new (RedisStore as any)(session)({
+  store: new RedisStore({
     client: redis as any,
     prefix: "glitter-mic:session:",
   }),
