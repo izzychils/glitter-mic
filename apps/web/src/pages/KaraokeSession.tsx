@@ -104,7 +104,13 @@ export function KaraokeSession() {
 
         if (lyricsResponse.ok) {
           const lyricsData = await lyricsResponse.json();
-          setLrcContent(lyricsData.lyrics);
+          // Check if lyrics are actually available (not null or empty)
+          if (lyricsData.lyrics && lyricsData.lyrics.trim().length > 0) {
+            setLrcContent(lyricsData.lyrics);
+          } else {
+            console.log("Lyrics endpoint returned null, using demo lyrics data");
+            setLrcContent(getLrcForSong(songId!));
+          }
         } else {
           console.log("Using demo lyrics data");
           setLrcContent(getLrcForSong(songId!));
