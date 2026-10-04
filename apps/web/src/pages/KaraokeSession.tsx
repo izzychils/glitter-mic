@@ -49,15 +49,33 @@ export function KaraokeSession() {
     try {
       setLoading(true);
 
-      // Fetch song details
-      const songResponse = await sessionFetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}`
-      );
+      // Try to fetch song details, but fall back to URL params if it fails
+      try {
+        const songResponse = await sessionFetch(
+          `${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/songs/${songId}`
+        );
 
-      if (!songResponse.ok) throw new Error("Failed to fetch song");
-
-      const songData = await songResponse.json();
-      setSong(songData);
+        if (songResponse.ok) {
+          const songData = await songResponse.json();
+          setSong(songData);
+        } else {
+          // Use data from URL params as fallback
+          setSong({
+            id: songId!,
+            title: songTitle || "Unknown Title",
+            artist: songArtist || "Unknown Artist",
+            imageUrl: null,
+          });
+        }
+      } catch (error) {
+        console.warn("Could not fetch song details, using URL params:", error);
+        setSong({
+          id: songId!,
+          title: songTitle || "Unknown Title",
+          artist: songArtist || "Unknown Artist",
+          imageUrl: null,
+        });
+      }
 
       // Fetch streaming URL
       const streamResponse = await sessionFetch(
