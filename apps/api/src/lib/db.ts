@@ -18,7 +18,7 @@ pool.on("error", (err) => {
 });
 
 // Test connection
-pool.query("SELECT NOW()", (err) => {
+pool.query("SELECT NOW()", (err: Error | null) => {
   if (err) {
     logger.error("Failed to connect to database", err);
   } else {

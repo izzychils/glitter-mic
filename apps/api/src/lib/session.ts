@@ -22,9 +22,13 @@ export const sessionMiddleware = session({
 });
 
 // Extend express-session types
-declare module "express-session" {
-  interface SessionData {
-    userId?: string;
-    username?: string;
+declare global {
+  namespace Express {
+    interface Request {
+      session: session.Session & {
+        userId?: string;
+        username?: string;
+      };
+    }
   }
 }
