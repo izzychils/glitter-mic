@@ -1,5 +1,5 @@
 import session from "express-session";
-import RedisStore from "connect-redis";
+import { default as connectRedis } from "connect-redis";
 import { redis } from "./redis";
 import { env } from "./env";
 
@@ -10,6 +10,9 @@ declare module "express-session" {
     username?: string;
   }
 }
+
+// Create RedisStore
+const RedisStore = connectRedis(session);
 
 // Configure Redis session store
 export const sessionMiddleware = session({
