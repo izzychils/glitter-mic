@@ -123,30 +123,31 @@ class EpidemicSoundService {
 
   /**
    * Get track details by ID using batch metadata endpoint
+   * Note: Epidemic Sound uses a batch endpoint even for single tracks
    */
   async getTrack(trackId: string, userId?: string): Promise<EpidemicTrack> {
     try {
-      // Use batch metadata endpoint with single track ID
-      // Must use repeated trackId parameters, not a single parameter
+      // Build URL manually to ensure proper format
+      // Epidemic expects: /v0/tracks/metadata?trackId=<uuid>
+      const url = `${this.baseURL}/tracks/metadata?trackId=${encodeURIComponent(trackId)}`;
+      
       const response = await axios.get<{ tracks: EpidemicTrack[] }>(
-        `${this.baseURL}/tracks/metadata`,
+        url,
         {
           headers: this.getHeaders(userId),
-          params: {
-            trackId: trackId, // Axios will properly encode this
-          },
         }
       );
 
       logger.info("Fetched track metadata", {
         trackId,
+        url,
         found: response.data.tracks?.length > 0,
         trackTitle: response.data.tracks?.[0]?.title,
       });
 
       const track = response.data.tracks?.[0];
       if (!track) {
-        logger.error("Track not found in batch response", { trackId });
+        logger.error("Track not found in batch response", { trackId, responseData: response.data });
         throw new Error("Track not found");
       }
 
@@ -156,7 +157,9 @@ class EpidemicSoundService {
         logger.error("Failed to get Epidemic Sound track", {
           trackId,
           status: error.response?.status,
+          statusText: error.response?.statusText,
           data: error.response?.data,
+          url: error.config?.url,
         });
       }
       throw new Error("Failed to fetch track from Epidemic Sound");
