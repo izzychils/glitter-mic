@@ -177,13 +177,15 @@ class EpidemicSoundService {
 
   /**
    * Get track details by ID using batch metadata endpoint
-   * Note: Epidemic Sound uses a batch endpoint even for single tracks
+   * Per Epidemic Sound docs: must use URLSearchParams.append for proper formatting
    */
   async getTrack(trackId: string, userId?: string): Promise<EpidemicTrack> {
     try {
-      // Build URL manually to ensure proper format
-      // Epidemic expects: /v0/tracks/metadata?trackId=<uuid>
-      const url = `${this.baseURL}/tracks/metadata?trackId=${encodeURIComponent(trackId)}`;
+      // Build URL with URLSearchParams as shown in Epidemic Sound docs
+      const params = new URLSearchParams();
+      params.append('trackId', trackId);
+      
+      const url = `${this.baseURL}/tracks/metadata?${params.toString()}`;
       
       const response = await axios.get<{ tracks: EpidemicTrack[] }>(
         url,
