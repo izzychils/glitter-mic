@@ -233,4 +233,25 @@ router.get("/session", (req, res) => {
   }
 });
 
+/**
+ * GET /api/auth/debug
+ * Debug endpoint to check session and cookie configuration
+ */
+router.get("/debug", (req, res) => {
+  res.json({
+    hasSession: !!req.session,
+    sessionId: req.sessionID,
+    userId: req.session?.userId,
+    cookies: req.cookies,
+    headers: {
+      origin: req.headers.origin,
+      cookie: req.headers.cookie,
+    },
+    env: {
+      nodeEnv: process.env.NODE_ENV,
+      clientOrigin: process.env.CLIENT_ORIGIN,
+    },
+  });
+});
+
 export default router;
