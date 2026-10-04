@@ -60,6 +60,32 @@ router.get("/", async (req, res) => {
 });
 
 /**
+ * GET /api/songs/featured
+ * Get featured tracks (popular songs with guaranteed full-length audio)
+ * IMPORTANT: This must be before /:id route to avoid "featured" being treated as an ID
+ */
+router.get("/featured", async (req, res) => {
+  try {
+    const { limit = "20" } = req.query;
+    const userId = req.session.userId;
+
+    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 60);
+    const { tracks, total } = await epidemicService.getFeaturedTracks(limitNum, userId);
+
+    res.json({
+      tracks: tracks.map(transformEpidemicTrack),
+      totalResults: total,
+    });
+  } catch (error) {
+    logger.error("Failed to fetch featured songs", error);
+    res.status(500).json({
+      error: "Failed to fetch featured songs",
+      message: "Could not load featured tracks",
+    });
+  }
+});
+
+/**
  * GET /api/songs/:id
  * Get detailed info about a specific song from Epidemic Sound
  */
@@ -144,31 +170,6 @@ router.get("/:id/lyrics", async (req, res) => {
   } catch (error) {
     logger.error("Failed to get lyrics", { trackId: req.params.id, error });
     res.json({ lyrics: null });
-  }
-});
-
-/**
- * GET /api/songs/featured
- * Get featured tracks (popular songs with guaranteed full-length audio)
- */
-router.get("/featured", async (req, res) => {
-  try {
-    const { limit = "20" } = req.query;
-    const userId = req.session.userId;
-
-    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 60);
-    const { tracks, total } = await epidemicService.getFeaturedTracks(limitNum, userId);
-
-    res.json({
-      tracks: tracks.map(transformEpidemicTrack),
-      totalResults: total,
-    });
-  } catch (error) {
-    logger.error("Failed to fetch featured songs", error);
-    res.status(500).json({
-      error: "Failed to fetch featured songs",
-      message: "Could not load featured tracks",
-    });
   }
 });
 
