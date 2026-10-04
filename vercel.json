@@ -4,6 +4,5 @@
   "devCommand": "npm run dev -w @glitter-mic/web",
   "installCommand": "npm install",
   "outputDirectory": "apps/web/dist",
-  "framework": null,
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./apps/web"
+  "framework": null
 }
