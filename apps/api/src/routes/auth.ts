@@ -255,19 +255,41 @@ router.get("/session", (req, res) => {
  * GET /api/auth/debug
  * Debug endpoint to check session and cookie configuration
  */
-router.get("/debug", (req, res) => {
+router.get("/debug", async (req, res) => {
+  const sessionToken = req.headers["x-session-token"] as string;
+  let redisData = null;
+  
+  if (sessionToken) {
+    try {
+      const sessionKey = `glitter-mic:session:${sessionToken}`;
+      redisData = await (async () => {
+        const data = await require("../lib/redis").redis.get(sessionKey);
+        return data ? (typeof data === "string" ? JSON.parse(data) : data) : null;
+      })();
+    } catch (error) {
+      redisData = { error: "Failed to load from Redis" };
+    }
+  }
+
   res.json({
-    hasSession: !!req.session,
-    sessionId: req.sessionID,
-    userId: req.session?.userId,
-    cookies: req.cookies,
+    session: {
+      exists: !!req.session,
+      sessionId: req.sessionID,
+      userId: req.session?.userId,
+      username: req.session?.username,
+    },
     headers: {
       origin: req.headers.origin,
       cookie: req.headers.cookie,
+      xSessionToken: sessionToken,
     },
+    cookies: req.cookies,
+    redisData,
     env: {
       nodeEnv: process.env.NODE_ENV,
       clientOrigin: process.env.CLIENT_ORIGIN,
+      hasSessionSecret: !!process.env.SESSION_SECRET,
+      hasRedis: !!process.env.REDIS_URL,
     },
   });
 });

@@ -81,25 +81,36 @@ export function sessionHeaderFallback(req: Request, res: Response, next: NextFun
 
   // Try to load session from Redis using the token
   const sessionKey = `glitter-mic:session:${sessionToken}`;
+  
   redis
     .get(sessionKey)
     .then((sessionData) => {
-      if (sessionData && typeof sessionData === "string") {
-        try {
-          const parsed = JSON.parse(sessionData);
-          if (parsed.userId) {
-            // Manually attach session data
-            req.session.userId = parsed.userId;
-            req.session.username = parsed.username;
-          }
-        } catch (error) {
-          // Invalid session data, ignore
+      if (!sessionData) {
+        console.log(`[Session] No session found for token: ${sessionToken}`);
+        return next();
+      }
+
+      try {
+        // Express-session stores data as JSON string
+        const parsed = typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData;
+        
+        console.log(`[Session] Loaded session from header:`, { 
+          hasUserId: !!parsed.userId,
+          sessionToken: sessionToken.substring(0, 8) + "..." 
+        });
+
+        if (parsed.userId) {
+          // Manually attach session data to request
+          req.session.userId = parsed.userId;
+          req.session.username = parsed.username;
         }
+      } catch (error) {
+        console.error(`[Session] Failed to parse session data:`, error);
       }
       next();
     })
-    .catch(() => {
-      // Error loading session, continue anyway
+    .catch((error) => {
+      console.error(`[Session] Error loading session from Redis:`, error);
       next();
     });
 }

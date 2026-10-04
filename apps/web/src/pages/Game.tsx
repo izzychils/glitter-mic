@@ -209,14 +209,20 @@ export function Game() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between md:mb-8"
         >
-          <div>
-            <h1 className="text-2xl font-bold text-white md:text-3xl lg:text-4xl">
-              Welcome back,{" "}
-              <span className="bg-gradient-to-r from-blood-pink to-blood-red bg-clip-text text-transparent">
-                {user?.display_name || user?.username}
-              </span>
-            </h1>
-            <p className="mt-1 text-sm text-white/60 md:text-base">Ready to hit the high notes?</p>
+          <div className="flex items-center gap-3">
+            {/* Profile Icon */}
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blood-pink to-blood-red text-lg font-bold text-white shadow-lg md:h-12 md:w-12 md:text-xl">
+              {(user?.display_name || user?.username || "U")[0].toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white md:text-3xl lg:text-4xl">
+                Welcome back,{" "}
+                <span className="bg-gradient-to-r from-blood-pink to-blood-red bg-clip-text text-transparent">
+                  {user?.display_name || user?.username}
+                </span>
+              </h1>
+              <p className="mt-1 text-sm text-white/60 md:text-base">Ready to hit the high notes?</p>
+            </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleLogout} leftIcon={LogOut}>
             Logout
