@@ -4,18 +4,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        pinkbar: "var(--pink-500)",
-        pinksoft: "var(--pink-300)",
-        blush: "var(--pink-100)",
-        alert: "var(--red-500)",
-        alertdeep: "var(--red-600)",
-        bluebar: "var(--blue-500)",
-        bluesoft: "var(--blue-300)",
-        midnight: "var(--blue-900)",
-        ink: "var(--ink)",
+        'blood-pink': 'var(--blood-pink)',
+        'blood-pink-light': 'var(--blood-pink-light)',
+        'blood-pink-dark': 'var(--blood-pink-dark)',
+        'blood-red': 'var(--blood-red)',
+        'blood-red-light': 'var(--blood-red-light)',
+        'blood-red-dark': 'var(--blood-red-dark)',
+        'navy': 'var(--navy)',
+        'navy-light': 'var(--navy-light)',
+        'navy-lighter': 'var(--navy-lighter)',
+        'navy-dark': 'var(--navy-dark)',
       },
       borderRadius: {
-        glass: "24px",
+        glass: "16px",
+      },
+      animation: {
+        'float': 'float 20s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 8s ease-in-out infinite',
       },
     },
   },

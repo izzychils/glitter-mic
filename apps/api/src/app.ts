@@ -2,7 +2,9 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import { env } from "./lib/env";
+import { sessionMiddleware } from "./lib/session";
 import { errorHandler, notFoundHandler } from "./middleware/error";
 import { apiRouter } from "./routes";
 
@@ -18,6 +20,8 @@ export function createApp(): express.Express {
     })
   );
   app.use(express.json({ limit: "1mb" }));
+  app.use(cookieParser());
+  app.use(sessionMiddleware);
 
   // Section 14: rate limiting on every API route (uploads/STT get stricter ones later).
   app.use(

@@ -10,13 +10,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   leftIcon?: LucideIcon;
   loading?: boolean;
+  fullWidth?: boolean;
 }
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: "bg-[var(--pink-500)] text-[var(--ink)] hover:bg-[var(--pink-300)]",
-  secondary: "bg-[var(--blue-500)] text-[var(--white)] hover:bg-[var(--blue-300)] hover:text-[var(--ink)]",
-  danger: "bg-[var(--red-500)] text-[var(--white)] hover:bg-[var(--red-600)]",
-  ghost: "border border-white/25 bg-transparent text-[var(--white)] hover:bg-white/10",
+  primary: "bg-blood-pink text-white hover:bg-blood-pink-light shadow-lg shadow-blood-pink/25",
+  secondary: "bg-navy-lighter text-white hover:bg-navy-light border border-white/20",
+  danger: "bg-blood-red text-white hover:bg-blood-red-light shadow-lg shadow-blood-red/25",
+  ghost: "border border-white/25 bg-transparent text-white hover:bg-white/10",
 };
 
 const SIZES: Record<ButtonSize, string> = {
@@ -26,7 +27,7 @@ const SIZES: Record<ButtonSize, string> = {
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = "primary", size = "md", leftIcon: LeftIcon, loading = false, disabled, className, children, ...props },
+  { variant = "primary", size = "md", leftIcon: LeftIcon, loading = false, fullWidth = false, disabled, className, children, ...props },
   ref
 ) {
   return (
@@ -34,10 +35,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center rounded-2xl font-semibold transition-colors duration-200",
+        "inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-200",
         "active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
         VARIANTS[variant],
         SIZES[size],
+        fullWidth && "w-full",
         className
       )}
       {...props}

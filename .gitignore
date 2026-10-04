@@ -3,7 +3,7 @@ dist/
 build/
 coverage/
 
-# env
+# env (hiding .env files for security)
 .env
 .env.*
 !.env.example

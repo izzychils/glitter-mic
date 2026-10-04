@@ -23,19 +23,23 @@ const envSchema = z.object({
   /** Frontend origin allowed by CORS / Socket.IO. */
   CLIENT_ORIGIN: z.string().default("http://localhost:5173"),
 
-  // Phase 2: Google auth
-  JWT_SECRET: z.string().min(16).default("glitter-mic-dev-secret-change-me"),
-  GOOGLE_CLIENT_ID: z.string().optional(),
+  // Session secret for express-session
+  SESSION_SECRET: z.string().min(16).default("glitter-mic-session-secret-change-in-production"),
 
-  // Phase 7: persistence + leaderboards (Neon Postgres instead of MongoDB)
-  DATABASE_URL: z.string().optional(),
-  REDIS_URL: z.string().optional(),
+  // Neon PostgreSQL database
+  DATABASE_URL: z.string().url(),
 
-  // Phase 6: streaming speech-to-text
-  DEEPGRAM_API_KEY: z.string().optional(),
+  // Upstash Redis for sessions
+  REDIS_URL: z.string().url(),
+  REDIS_TOKEN: z.string(),
 
-  // Phase 3: song catalog
-  JAMENDO_ID: z.string().optional(),
+  // Deepgram API for speech-to-text
+  DEEPGRAM_API_KEY: z.string(),
+  DEEPGRAM_PROJECT_ID: z.string().optional(),
+
+  // Jamendo API for music catalog
+  JAMENDO_CLIENT_ID: z.string(),
+  JAMENDO_CLIENT_SECRET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

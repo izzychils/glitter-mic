@@ -3,20 +3,33 @@
 @tailwind utilities;
 
 :root {
-  --pink-500: #ff4f9a;
-  --pink-300: #ff9cc7;
-  --pink-100: #ffe3ef;
-  --red-500: #ef233c;
-  --red-600: #d90429;
-  --blue-500: #2b6fff;
-  --blue-300: #8ab4ff;
-  --blue-900: #0b1b4d;
+  /* Blood pink and blood red palette */
+  --blood-pink: #FF1744;
+  --blood-pink-light: #FF4569;
+  --blood-pink-dark: #C4001D;
+  --blood-red: #B71C1C;
+  --blood-red-light: #D32F2F;
+  --blood-red-dark: #8B0000;
+  
+  /* Navy blue palette */
+  --navy: #001f3f;
+  --navy-light: #003366;
+  --navy-lighter: #004d7a;
+  --navy-dark: #001428;
+  
+  /* Utility colors */
   --white: #ffffff;
-  --ink: #14102b;
-
-  --glass-bg: rgba(255, 255, 255, 0.14);
-  --glass-border: rgba(255, 255, 255, 0.35);
-  --glass-shadow: 0 8px 32px rgba(11, 27, 77, 0.35);
+  --white-80: rgba(255, 255, 255, 0.8);
+  --white-60: rgba(255, 255, 255, 0.6);
+  --white-40: rgba(255, 255, 255, 0.4);
+  --white-20: rgba(255, 255, 255, 0.2);
+  --white-10: rgba(255, 255, 255, 0.1);
+  
+  /* Card backgrounds (solid, no glassmorphism) */
+  --card-bg: rgba(0, 49, 102, 0.9);
+  --card-bg-hover: rgba(0, 77, 122, 0.95);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 @layer base {
@@ -27,85 +40,58 @@
   }
 
   body {
-    background-color: var(--blue-900);
+    background-color: var(--navy);
     color: var(--white);
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
+  
+  * {
+    box-sizing: border-box;
+  }
 }
 
-/* ---- Glassmorphism surface (flat translucent fill, no color ramps) ---- */
-.glass {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  box-shadow:
-    var(--glass-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  border-radius: 24px;
-}
-
-/* ---- Drifting background circles: single flat colors, blurred, never color ramps ---- */
-@keyframes drift-a {
-  0% {
+/* ---- Subtle background animation ---- */
+@keyframes float {
+  0%, 100% {
     transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.15;
   }
   50% {
-    transform: translate3d(70px, -50px, 0) scale(1.1);
-  }
-  100% {
-    transform: translate3d(-40px, 40px, 0) scale(0.95);
+    transform: translate3d(30px, -30px, 0) scale(1.1);
+    opacity: 0.25;
   }
 }
 
-@keyframes drift-b {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
   }
   50% {
-    transform: translate3d(-60px, 60px, 0) scale(1.08);
-  }
-  100% {
-    transform: translate3d(50px, -30px, 0) scale(0.92);
+    opacity: 0.5;
+    transform: scale(1.05);
   }
 }
 
-@keyframes drift-c {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(40px, -60px, 0) scale(1.06);
-  }
-  100% {
-    transform: translate3d(-50px, 30px, 0) scale(0.96);
-  }
+.animate-float {
+  animation: float 20s ease-in-out infinite;
 }
 
-.animate-drift-a {
-  animation: drift-a 38s ease-in-out infinite alternate;
-}
-
-.animate-drift-b {
-  animation: drift-b 46s ease-in-out infinite alternate;
-}
-
-.animate-drift-c {
-  animation: drift-c 54s ease-in-out infinite alternate;
+.animate-pulse-glow {
+  animation: pulse-glow 8s ease-in-out infinite;
 }
 
 /* ---- Accessibility ---- */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--pink-300);
+  outline: 2px solid var(--blood-pink);
   outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-drift-a,
-  .animate-drift-b,
-  .animate-drift-c {
+  .animate-float,
+  .animate-pulse-glow {
     animation: none;
   }
 
